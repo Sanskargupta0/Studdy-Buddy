@@ -9,15 +9,38 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.3.1"
+    "@clerk/nextjs": "^6.3.4",
+    "@google/generative-ai": "^0.21.0",
+    "@neondatabase/serverless": "^0.10.3",
+    "@radix-ui/react-progress": "^1.1.0",
+    "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-slot": "^1.1.1",
+    "axios": "^1.7.7",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
+    "drizzle-kit": "^0.31.0",
+    "drizzle-orm": "^0.43.0",
+    "embla-carousel-react": "^8.5.1",
+    "inngest": "^3.35.1",
+    "lucide-react": "^0.459.0",
+    "next": "15.0.3",
+    "next-themes": "^0.4.3",
+    "react": "^18",
+    "react-card-flip": "^1.2.3",
+    "react-dom": "^18",
+    "react-spinners": "^0.15.0",
+    "sonner": "^1.7.0",
+    "stripe": "^17.5.0",
+    "tailwind-merge": "^2.5.4",
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.1",
-    "@eslint/eslintrc": "^3"
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }

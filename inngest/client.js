@@ -1,5 +1,5 @@
 import { Inngest } from "inngest";
 
 export const inngest = new Inngest({
-  id: "studdybuddy",
+  id: "ai-study-material-gen",
 });

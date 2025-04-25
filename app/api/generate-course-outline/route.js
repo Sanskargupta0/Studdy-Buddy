@@ -4,7 +4,6 @@ import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
 import { inngest } from "@/inngest/client";
 import { NextResponse } from "next/server";
 
-
 export async function POST(req) {
   try {
     const { courseId, topic, courseType, difficultyLevel, createdBy } =

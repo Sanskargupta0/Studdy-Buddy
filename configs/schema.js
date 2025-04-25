@@ -5,6 +5,7 @@ import {
   varchar,
   json,
   text,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const USER_TABLE = pgTable("users", {
@@ -39,4 +40,10 @@ export const STUDY_TYPE_CONTENT_TABLE = pgTable("studyTypeContent", {
   type: varchar().notNull(),
   content: json(),
   status: varchar().default("Generating"),
+});
+
+export const PAYMENT_RECORD_TABLE = pgTable("paymentRecord", {
+  id: serial().primaryKey(),
+  customerId: varchar(),
+  sessionId: varchar(),
 });

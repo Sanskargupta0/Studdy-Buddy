@@ -3,19 +3,16 @@ import { inngest } from "./client";
 import {
   CHAPTER_NOTES_TABLE,
   STUDY_MATERIAL_TABLE,
+  STUDY_TYPE_CONTENT_TABLE,
   USER_TABLE,
 } from "@/configs/schema";
 import { eq } from "drizzle-orm";
-import { generateNotesAiModel } from "@/configs/AiModel";
-
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
-  async ({ event, step }) => {
-    await step.sleep("wait-a-moment", "1s");
-    return { event, body: "Hello World!" };
-  }
-);
+import {
+  generateNotesAiModel,
+  GenerateQnAAiModel,
+  GenerateQuizAiModel,
+  GenerateStudyTypeContentAiModel,
+} from "@/configs/AiModel";
 
 export const CreateNewUser = inngest.createFunction(
   { id: "create-user" },
@@ -32,16 +29,17 @@ export const CreateNewUser = inngest.createFunction(
             .select()
             .from(USER_TABLE)
             .where(
-              eq(USER_TABLE.email, user?.primaryEmailAddress?.emailAddress)
+              eq(USER_TABLE.email, user?.email)
             );
 
           if (existingUser?.length === 0) {
             // If not, then add to db with proper field names
+            console.log("Creating new user in DB:", user);
             const userResp = await db
               .insert(USER_TABLE)
               .values({
-                userName: user?.fullName || "", // Match the schema column name
-                email: user?.primaryEmailAddress?.emailAddress || "",
+                userName: user?.userName || "", // Match the schema column name
+                email: user?.email || "",
                 isMember: false,
                 customerId: null,
               })
@@ -133,5 +131,46 @@ export const GenerateNotes = inngest.createFunction(
 
       throw error; // Re-throw to let Inngest handle the error
     }
+  }
+);
+
+//Used to generate flash cards, quiz and qna
+export const GenerateStudyTypeContent = inngest.createFunction(
+  { id: "Generate Study Type Content" },
+  { event: "studyType.content" },
+
+  async ({ event, step }) => {
+    const { studyType, prompt, courseId, recordId } = event.data;
+
+    const AiResult = await step.run(
+      "Generating FlashCard using Ai",
+      async () => {
+        let result;
+        if (studyType === "Flashcard") {
+          result = await GenerateStudyTypeContentAiModel.sendMessage(prompt);
+        } else if (studyType === "Quiz") {
+          result = await GenerateQuizAiModel.sendMessage(prompt);
+        } else if (studyType === "QA") {
+          result = await GenerateQnAAiModel.sendMessage(prompt); // Add new condition
+        } else {
+          throw new Error(`Unsupported studyType: ${studyType}`);
+        }
+        const AIResult = JSON.parse(result.response.text());
+        return AIResult;
+      }
+    );
+
+    //Save the result
+    const DbResult = await step.run("Save Result to DB", async () => {
+      const result = await db
+        .update(STUDY_TYPE_CONTENT_TABLE)
+        .set({
+          content: AiResult,
+          status: "Ready",
+        })
+        .where(eq(STUDY_TYPE_CONTENT_TABLE.id, recordId));
+
+      return "Data Inserted";
+    });
   }
 );

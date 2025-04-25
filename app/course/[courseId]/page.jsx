@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import CourseIntroCard from "./components/CourseIntroCard";
 import StudyMaterialSection from "./components/StudyMaterialSection";
 import ChapterList from "./components/ChapterList";
+import YouTubeRecommendations from "./components/YouTubeRecommendations";
 
 function Course() {
   const { courseId } = useParams();
@@ -26,6 +27,8 @@ function Course() {
         <CourseIntroCard course={course} />
         {/* Study Materials Options */}
         <StudyMaterialSection courseId={courseId} course={course} />
+        {/* YouTube Recommendations */}
+        <YouTubeRecommendations courseId={courseId} course={course} />
         {/* Chapter List */}
         <ChapterList course={course} />
       </div>

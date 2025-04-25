@@ -6,6 +6,7 @@ import {
   json,
   text,
   integer,
+  timestamp,
 } from "drizzle-orm/pg-core";
 
 export const USER_TABLE = pgTable("users", {
@@ -14,6 +15,7 @@ export const USER_TABLE = pgTable("users", {
   email: varchar().notNull(),
   isMember: boolean().default(false),
   customerId: varchar(),
+  credits: integer().default(2),
 });
 
 export const STUDY_MATERIAL_TABLE = pgTable("studyMaterial", {
@@ -46,4 +48,16 @@ export const PAYMENT_RECORD_TABLE = pgTable("paymentRecord", {
   id: serial().primaryKey(),
   customerId: varchar(),
   sessionId: varchar(),
+});
+
+export const YOUTUBE_RECOMMENDATIONS_TABLE = pgTable("youtubeRecommendations", {
+  id: serial().primaryKey(),
+  courseId: varchar().notNull(),
+  topic: varchar().notNull(),
+  videoId: varchar().notNull(),
+  title: varchar().notNull(),
+  description: text(),
+  thumbnailUrl: varchar(),
+  similarityScore: integer(),
+  createdAt: timestamp().defaultNow(),
 });

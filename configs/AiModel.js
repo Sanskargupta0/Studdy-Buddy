@@ -1,0 +1,69 @@
+const {
+  GoogleGenerativeAI
+} = require("@google/generative-ai");
+
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
+
+// Create the model
+const generationConfig = {
+  temperature: 1,
+  top_p: 0.95,
+  top_k: 40,
+  max_output_tokens: 8192,
+  response_mime_type: "application/json",
+};
+
+const generationConfig1 = {
+  temperature: 0.95,
+  topP: 0.95,
+  topK: 40,
+  maxOutputTokens: 8192,
+  responseMimeType: "text/plain",
+};
+
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+export const courseOutlineAIModel = model.startChat({
+  generationConfig,
+  history: [
+    {
+      role: "user",
+      parts: [
+        {
+          text: "Generate a study material for Python for Exam and level of Difficulty will be easy with summary of course, List of chapters along with the summary for each chapter, Topic list in each chapter in JSON format",
+        },
+      ],
+    },
+    {
+      role: "model",
+      parts: [
+        {
+          text: '```json\n{"courseSummary": "This course provides an easy introduction to Python programming. It covers fundamental concepts and syntax, making it ideal for beginners preparing for an introductory Python exam.", "chapters": [{"chapterTitle": "Introduction to Python", "chapterSummary": "This chapter introduces the basics of Python, including its history, applications, and how to set up your programming environment.", "topics": ["What is Python?", "Setting up Python environment", "First Python program", "Basic Syntax", "Running Python code"]}, {"chapterTitle": "Variables and Data Types", "chapterSummary": "This chapter covers fundamental data types in Python and how to work with variables.", "topics": ["Variables", "Integers", "Floats", "Strings", "Booleans", "Type Conversion"]}, {"chapterTitle": "Operators", "chapterSummary": "This chapter explores various operators in Python, including arithmetic, comparison, logical, and assignment operators.", "topics": ["Arithmetic Operators", "Comparison Operators", "Logical Operators", "Assignment Operators"]}, {"chapterTitle": "Control Flow", "chapterSummary": "This chapter explains conditional statements and loops in Python.", "topics": ["if-else statements", "for loop", "while loop", "break and continue statements"]}, {"chapterTitle": "Data Structures", "chapterSummary": "This chapter introduces basic data structures such as lists, tuples, and dictionaries.", "topics": ["Lists", "Tuples", "Dictionaries", "Sets"]}, {"chapterTitle": "Functions", "chapterSummary": "This chapter explains how to define and use functions to organize your code.", "topics": ["Defining Functions", "Function Arguments", "Return Values", "Scope"]}, {"chapterTitle": "Input and Output", "chapterSummary": "This chapter demonstrates how to take input from the user and display output.", "topics": ["Taking user input", "Displaying output", "File input and output"]}]}\n\n```',
+        },
+      ],
+    },
+  ],
+});
+
+export const generateNotesAiModel = model.startChat({
+  generationConfig1,
+  history: [
+    {
+      role: "user",
+      parts: [
+        {
+          text: 'Generate exam material detail content for each chapter. Make sure to include all topic point in the content and give detailed explanation for each topic point  make sure to give content in HTML format (Do not add Html, Head, Body, title tag), write the content in html tags like <h3> for chapter title <p> for content <h4> for topic, The Chapters:{\\n"chapterTitle": "Introduction to Data Structures and Algorithms",\\n"chapterSummary": "This chapter Generate exam material detail content for each chapter. Make sure to include all topic point in the content, make sure to give content in HTML format (DO not add HTML, Head, Body, title tag), write the content in html tags like <h3> for chapter title <p> for content <h4> for topic, The Chapters:{\\n"chapterTitle": "Introduction to Data Structures and Algorithms",\\n"chapterSummary": "This chapter introduces the fundamental concepts of data structures and algorithms, their importance in problem-solving, and how to approach algorithm analysis.",\\n"topics": [\\n"What are Data Structures?",\\n"What are Algorithms?",\\n"Big O Notation (Introduction)",\\n"Common Data Structure Categories"\\n]\\n},',
+        },
+      ],
+    },
+    {
+      role: "model",
+      parts: [
+        {
+          text: "```html\n <h3>Introduction to Data Structures and Algorithms</h3>\n    <p>This chapter introduces the fundamental concepts of data structures and algorithms, their importance in problem-solving, and how to approach algorithm analysis. Understanding these concepts is crucial for developing efficient and effective software solutions.</p>\n\n    <h4>What are Data Structures?</h4>\n    <p>Data structures are specialized ways of organizing, storing, and managing data within a computer's memory. They are not just about storing data; they are about structuring it in a way that allows for efficient access, modification, and manipulation. The choice of data structure can drastically affect the performance of an algorithm, particularly when dealing with large datasets. Different data structures are suitable for different tasks; for example, an array is excellent for accessing elements by index, while a linked list is better for inserting and deleting elements. In essence, a data structure defines the relationship between the data it holds and the operations that can be performed on that data.</p>\n        <ul>\n            <li><strong>Key Concepts:</strong> Data organization, efficient data access, data storage, manipulation of data.</li>\n            <li><strong>Examples:</strong>\n                <ul>\n                    <li><strong>Arrays:</strong> A collection of elements of the same type stored in contiguous memory locations, accessed by index.</li>\n                    <li><strong>Linked Lists:</strong> A sequence of nodes, each containing data and a reference (link) to the next node in the sequence.</li>\n                    <li><strong>Trees:</strong> Hierarchical structures consisting of nodes connected by edges, often used for representing hierarchical relationships.</li>\n                    <li><strong>Graphs:</strong> A collection of nodes (vertices) connected by edges, useful for representing relationships between objects.</li>\n                    <li><strong>Hash Tables:</strong> Data structures that use a hash function to map keys to values for fast lookups.</li>\n                </ul>\n            </li>\n        </ul>\n\n    <h4>What are Algorithms?</h4>\n    <p>Algorithms are well-defined, step-by-step instructions or procedures designed to solve a particular problem or perform a specific task. They are the core logic behind any program, dictating how data is processed to produce the desired output. An algorithm must be unambiguous, meaning it should have a clear and precise set of instructions. It must also be effective, meaning it should be able to solve the problem in a finite number of steps, and it should terminate. Algorithms can be represented in various forms, including natural language, pseudocode, flowcharts, and programming language code. The efficiency of an algorithm is a crucial consideration, and it is often measured by its time and space complexity.</p>\n    <ul>\n         <li><strong>Key Concepts:</strong> Step-by-step instructions, problem-solving methodology, logical flow of operations.</li>\n         <li><strong>Characteristics:</strong>\n            <ul>\n                <li><strong>Finiteness:</strong> An algorithm must terminate after a finite number of steps.</li>\n                <li><strong>Definiteness:</strong> Each step of the algorithm must be precisely defined and unambiguous.</li>\n                <li><strong>Input:</strong> An algorithm may have zero or more inputs.</li>\n                <li><strong>Output:</strong> An algorithm must produce one or more outputs.</li>\n                <li><strong>Effectiveness:</strong> Each step must be basic and feasible to perform.</li>\n            </ul>\n        </li>\n    </ul>\n\n    <h4>Big O Notation (Introduction)</h4>\n    <p>Big O notation is a mathematical notation used to describe the limiting behavior of a function, particularly in the context of algorithm analysis. It provides a way to express how the runtime or space requirements of an algorithm grow as the input size grows. Big O notation focuses on the dominant term in the algorithm's complexity, ignoring constant factors and lower-order terms. It provides an upper bound on the growth rate of an algorithm’s resource usage, focusing on the worst-case performance, for example, if an algorithm has a time complexity of O(n), it means that the time it takes to run will grow linearly with the size of the input (n). Big O notation is essential for comparing the efficiency of different algorithms and choosing the best one for a particular problem.</p>\n     <ul>\n        <li><strong>Key Concepts:</strong> Algorithm complexity, growth rate of resource usage, worst-case scenario analysis, upper bound on performance.</li>\n        <li><strong>Common Notations:</strong>\n            <ul>\n                <li><strong>O(1) - Constant time:</strong> The algorithm's runtime is independent of the input size (e.g., accessing an element in an array).</li>\n                <li><strong>O(log n) - Logarithmic time:</strong> The algorithm's runtime increases logarithmically with the input size (e.g., binary search).</li>\n                <li><strong>O(n) - Linear time:</strong> The algorithm's runtime increases linearly with the input size (e.g., traversing a list).</li>\n                 <li><strong>O(n log n) - Log-linear time:</strong> The algorithm's runtime grows proportionally to n multiplied by the logarithm of n (e.g., merge sort).</li>\n                <li><strong>O(n^2) - Quadratic time:</strong> The algorithm's runtime increases proportionally to the square of the input size (e.g., nested loops).</li>\n                <li><strong>O(2^n) - Exponential time:</strong> The algorithm's runtime grows exponentially with the input size (e.g., brute force algorithms).</li>\n            </ul>\n        </li>\n    </ul>\n\n    <h4>Common Data Structure Categories</h4>\n    <p>Data structures can be classified into various categories based on their organization and properties. These categories help in understanding the characteristics and appropriate uses of different data structures.</p>\n        <ul>\n         <li><strong>Linear Data Structures:</strong>\n            <p>In linear data structures, data elements are arranged in a sequential manner. Each element is connected to the previous and next element (except for the first and last). These structures are easy to implement and traverse but may not always be the most efficient for complex operations.\n               Examples:\n                <ul>\n                    <li><strong>Arrays:</strong>  A contiguous block of memory storing elements of the same type.</li>\n                    <li><strong>Linked Lists:</strong> A sequence of nodes, each containing data and a link to the next node.</li>\n                    <li><strong>Stacks:</strong>  A LIFO (Last-In-First-Out) structure where elements are added and removed from one end.</li>\n                     <li><strong>Queues:</strong>  A FIFO (First-In-First-Out) structure where elements are added at the rear and removed from the front.</li>\n                </ul>\n            </p>\n        </li>\n         <li><strong>Non-linear Data Structures:</strong>\n            <p>In non-linear data structures, data elements are not arranged sequentially; elements are related to others in a more complex fashion. These structures are better suited for storing data with hierarchical or network-like relationships and can handle more complex operations efficiently.\n                Examples:\n                <ul>\n                    <li><strong>Trees:</strong> A hierarchical data structure with a root node, child nodes, and edges connecting them.</li>\n                     <li><strong>Graphs:</strong> A collection of nodes (vertices) connected by edges, used to model relationships between objects.</li>\n                 </ul>\n            </p>\n        </li>\n         <li><strong>Primitive Data Structures:</strong>\n            <p>Primitive data structures are the basic building blocks provided by programming languages for data representation. They are directly supported by the hardware and are used to build more complex data structures.\n                 Examples:\n                <ul>\n                    <li><strong>Integers:</strong> Whole numbers.</li>\n                    <li><strong>Floats:</strong> Numbers with decimal points.</li>\n                    <li><strong>Characters:</strong> Single text characters.</li>\n                    <li><strong>Booleans:</strong> True or false values.</li>\n                </ul>\n            </p>\n        </li>\n         <li><strong>Abstract Data Types (ADTs):</strong>\n            <p>Abstract data types are high-level, conceptual models of data structures that specify their behavior without revealing implementation details. ADTs focus on what operations can be performed on the data, rather than how the data is stored. They provide a logical view of data and operations, which can be implemented using different data structures.\n               Examples:\n                <ul>\n                    <li><strong>Lists:</strong>  Ordered collection of elements.</li>\n                     <li><strong>Sets:</strong>  Collection of unique elements.</li>\n                     <li><strong>Maps:</strong>  Key-value pairs for mapping keys to values.</li>\n                 </ul>\n            </p>\n        </li>\n        </ul>\n```\n",
+        },
+      ],
+    },
+  ],
+});

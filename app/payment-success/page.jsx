@@ -1,27 +1,40 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
 import { CheckCircle } from "lucide-react";
+import { useAppState } from "@/_context/AppStateContext";
 
 export default function PaymentSuccess() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState("processing");
   const sessionId = searchParams.get("session_id");
+  const { refreshCredits } = useAppState();
 
   useEffect(() => {
     if (sessionId) {
       setStatus("success");
       
+      // Actively refresh the credits/membership status
+      refreshCredits();
+      
+      // Try refreshing a few times to ensure the webhook has been processed
+      const refreshInterval = setInterval(() => {
+        refreshCredits();
+      }, 2000);
+      
       // Automatically redirect after 5 seconds
       const timer = setTimeout(() => {
+        clearInterval(refreshInterval);
         router.push("/dashboard");
       }, 5000);
       
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        clearInterval(refreshInterval);
+      };
     }
-  }, [sessionId, router]);
+  }, [sessionId, router, refreshCredits]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

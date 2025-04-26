@@ -66,7 +66,7 @@ const LandingPage = () => {
               <div className="flex-1 relative">
                 <div className="relative w-full h-[400px] rounded-xl overflow-hidden shadow-2xl">
                   <Image
-                    src="/placeholder.svg?height=400&width=600"
+                    src="/image.png"
                     alt="AI Study Material Generator Dashboard"
                     fill
                     className="object-cover"

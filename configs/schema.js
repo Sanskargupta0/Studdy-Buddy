@@ -27,6 +27,9 @@ export const STUDY_MATERIAL_TABLE = pgTable("studyMaterial", {
   courseLayout: json(),
   createdBy: varchar().notNull(),
   status: varchar().default("Generating"),
+  isPublic: boolean().default(false),
+  publicSlug: varchar(),
+  upvotes: integer().default(0),
 });
 
 export const CHAPTER_NOTES_TABLE = pgTable("chapterNotes", {

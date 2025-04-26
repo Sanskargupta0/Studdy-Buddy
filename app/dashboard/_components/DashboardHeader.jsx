@@ -4,10 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { Moon, Volume2, VolumeX } from "lucide-react";
+import { Moon, Volume2, VolumeX, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useZenMode } from "@/app/provider";
+import { useUserCredits } from "@/app/_context/UserCreditsContext";
 
 function DashboardHeader() {
   const pathname = usePathname();
@@ -15,7 +17,8 @@ function DashboardHeader() {
   const isUpgradeRoute = pathname === "/dashboard/upgrade";
   
   const [focusMode, setFocusMode] = useState(false);
-  const [zenMode, setZenMode] = useState(false);
+  const { zenMode, toggleZenMode } = useZenMode();
+  const { credits, isMember, loading: creditsLoading } = useUserCredits();
   const [audio, setAudio] = useState(null);
   
   // Initialize audio on client side only
@@ -25,15 +28,29 @@ function DashboardHeader() {
     }
   }, []);
   
+  // Handle audio for zen mode
+  useEffect(() => {
+    if (!audio) return;
+    
+    if (zenMode) {
+      audio.loop = true;
+      audio.volume = 0.3;
+      audio.play().catch(e => console.error("Audio play failed:", e));
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [zenMode, audio]);
+  
   // Handle focus mode toggle
   const handleFocusModeToggle = () => {
     const newFocusMode = !focusMode;
     setFocusMode(newFocusMode);
-    
-    // Disable zen mode if focus mode is disabled
-    if (!newFocusMode && zenMode) {
-      handleZenModeToggle();
-    }
     
     // Add visual indication for focus mode
     if (newFocusMode) {
@@ -49,34 +66,22 @@ function DashboardHeader() {
       }
     } else {
       document.body.classList.remove('focus-mode');
-    }
-  };
-  
-  // Handle zen mode toggle
-  const handleZenModeToggle = () => {
-    const newZenMode = !zenMode;
-    setZenMode(newZenMode);
-    
-    if (audio) {
-      if (newZenMode) {
-        audio.loop = true;
-        audio.volume = 0.3;
-        audio.play().catch(e => console.error("Audio play failed:", e));
-      } else {
-        audio.pause();
-        audio.currentTime = 0;
+      
+      // Turn off zen mode when turning off focus mode
+      if (zenMode) {
+        toggleZenMode();
       }
     }
   };
 
-  // Condition to check whether we should show both the logo + name and the user button
-  const showLogoAndName = !( isDashboardRoute || isUpgradeRoute && window.innerWidth >= 768); // Only hide logo on medium screen (md) on /dashboard route
+  // Render mode - if we're in zen mode, some UI elements should be minimal
+  const showLogoAndName = !(isDashboardRoute || isUpgradeRoute) || window.innerWidth >= 768;
 
   return (
     <div
       className={`w-full p-3 shadow-md flex items-center ${
-        showLogoAndName ? "justify-between" : "justify-end" // Adjust layout based on whether both are shown
-      }`}
+        showLogoAndName ? "justify-between" : "justify-end"
+      } ${zenMode ? "bg-gray-50" : ""}`}
     >
       {/* Logo and Name - shown based on screen size and route */}
       {showLogoAndName && (
@@ -88,8 +93,30 @@ function DashboardHeader() {
         </div>
       )}
 
-      {/* Focus Mode and User Button */}
+      {/* User info, Focus Mode and User Button */}
       <div className="flex items-center gap-4">
+        {/* Credits indicator */}
+        {!creditsLoading && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 
+                  ${isMember ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"}`}
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                  {isMember ? "Premium" : `${credits} Credits`}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isMember 
+                  ? "You have unlimited access with your premium membership" 
+                  : `You have ${credits} credits remaining`}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        
+        {/* Focus mode toggle */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -114,12 +141,13 @@ function DashboardHeader() {
           </Tooltip>
         </TooltipProvider>
 
+        {/* Zen mode toggle */}
         {focusMode && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button 
-                  onClick={handleZenModeToggle}
+                  onClick={toggleZenMode}
                   className="p-1 rounded-full hover:bg-gray-100 transition-colors"
                 >
                   {zenMode ? <Volume2 className="h-5 w-5 text-blue-600" /> : <VolumeX className="h-5 w-5" />}

@@ -26,6 +26,36 @@ body.focus-mode::after {
   );
 }
 
+/* Zen mode transitions */
+* {
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, 
+              box-shadow 0.5s ease, transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Zen mode typography */
+.zen-mode {
+  font-family: 'Georgia', serif;
+}
+
+.zen-mode h1, .zen-mode h2, .zen-mode h3, 
+.zen-mode h4, .zen-mode h5, .zen-mode h6 {
+  letter-spacing: 0.02em;
+}
+
+.zen-mode p, .zen-mode li {
+  line-height: 1.8;
+}
+
+/* Zen mode container styles */
+.zen-mode-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }

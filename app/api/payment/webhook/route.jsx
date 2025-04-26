@@ -8,61 +8,101 @@ export async function POST(req) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   let data;
   let eventType;
+  
+  try {
   const payload = await req.json();
   data = payload.data;
   eventType = payload.type;
+    
+    console.log(`Processing webhook: ${eventType}`);
 
   switch (eventType) {
     case "checkout.session.completed":
       // Payment is successful and the subscription is created.
-      // You should provision the subscription and save the customer ID to your database.
       const customerEmail = data.object.customer_details.email;
       const customerId = data.object.customer;
 
+        console.log(`Activating subscription for: ${customerEmail}`);
+
+        try {
       const result = await db
         .update(USER_TABLE)
         .set({
           isMember: true,
           customerId: customerId,
-          // Don't reset credits here - keep existing credits
         })
-        .where(eq(USER_TABLE.email, customerEmail));
+            .where(eq(USER_TABLE.email, customerEmail))
+            .returning({ 
+              id: USER_TABLE.id,
+              email: USER_TABLE.email,
+              isMember: USER_TABLE.isMember 
+            });
 
-      console.log("User subscription activated:", customerEmail);
+          console.log("User subscription activated:", result);
+        } catch (dbError) {
+          console.error("Database error updating user:", dbError);
+        }
       break;
+        
     case "invoice.paid":
       // Continue to provision the subscription as payments continue to be made.
-      // Store the status in your database and check when a user accesses your service.
+        const paidCustomerId = data.object.customer;
+        
+        try {
+          // Make sure user stays as member when invoice is paid
+          await db
+            .update(USER_TABLE)
+            .set({ isMember: true })
+            .where(eq(USER_TABLE.customerId, paidCustomerId));
+            
+          // Record payment
       await db.insert(PAYMENT_RECORD_TABLE).values({
-        customerId: data.object.customer, // Stripe customer ID
-        sessionId: data.object.subscription, // Stripe subscription ID
+            customerId: paidCustomerId,
+            sessionId: data.object.subscription,
       });
+        } catch (dbError) {
+          console.error("Database error recording payment:", dbError);
+        }
       break;
+        
     case "invoice.payment_failed":
       // The payment failed or the customer does not have a valid payment method.
-      // The subscription becomes past_due. Notify your customer and send them to the
-      // customer portal to update their payment information.
+        const failedCustomerId = data.object.customer;
+        
+        try {
       await db
         .update(USER_TABLE)
-        .set({
-          isMember: false,
-          // Don't modify credits on payment failure
-        })
-        .where(eq(USER_TABLE.customerId, data.object.customer));
+            .set({ isMember: false })
+            .where(eq(USER_TABLE.customerId, failedCustomerId));
+        } catch (dbError) {
+          console.error("Database error updating user after payment failure:", dbError);
+        }
       break;
+        
     case "customer.subscription.deleted":
       // Subscription is canceled or expired
+        const deletedCustomerId = data.object.customer;
+        
+        try {
       await db
         .update(USER_TABLE)
-        .set({
-          isMember: false,
-          // Don't modify credits when subscription ends
-        })
-        .where(eq(USER_TABLE.customerId, data.object.customer));
+            .set({ isMember: false })
+            .where(eq(USER_TABLE.customerId, deletedCustomerId));
+        } catch (dbError) {
+          console.error("Database error updating user after subscription deletion:", dbError);
+        }
       break;
+        
     default:
-    // Unhandled event type
+        console.log(`Unhandled event type: ${eventType}`);
   }
 
   return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    return NextResponse.json(
+      { error: "Webhook handler failed" },
+      { status: 500 }
+    );
+  }
 }

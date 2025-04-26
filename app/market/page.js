@@ -1,12 +1,23 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { toast } from "sonner";
+import React from "react";
 
 export default function MarketplacePage() {
+  return (
+    <Suspense fallback={<div>Loading Marketplace...</div>}>
+      <MarketplaceContent />
+    </Suspense>
+  );
+}
+
+// Client component that uses useSearchParams
+function MarketplaceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -140,178 +151,178 @@ export default function MarketplacePage() {
   };
   
   return (
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Study Material Marketplace</h1>
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-6">Study Material Marketplace</h1>
+      
+      {/* Search and Filters */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form onSubmit={handleSearchSubmit} className="flex gap-2 mb-4">
+          <input
+            type="text"
+            name="search"
+            placeholder="Search topics..."
+            defaultValue={search}
+            className="flex-1 p-2 border rounded"
+          />
+          <Button type="submit">Search</Button>
+        </form>
         
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <form onSubmit={handleSearchSubmit} className="flex gap-2 mb-4">
-            <input
-              type="text"
-              name="search"
-              placeholder="Search topics..."
-              defaultValue={search}
-              className="flex-1 p-2 border rounded"
-            />
-            <Button type="submit">Search</Button>
-          </form>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Difficulty Filter */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Difficulty</label>
+            <select
+              value={difficulty}
+              onChange={(e) => handleFilterChange("difficulty", e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="">All Difficulties</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Difficulty Filter */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Difficulty</label>
-              <select
-                value={difficulty}
-                onChange={(e) => handleFilterChange("difficulty", e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                <option value="">All Difficulties</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
-            </div>
-            
-            {/* Course Type Filter */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Course Type</label>
-              <select
-                value={courseType}
-                onChange={(e) => handleFilterChange("courseType", e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                <option value="">All Types</option>
-                <option value="Lecture">Lecture</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Tutorial">Tutorial</option>
-              </select>
-            </div>
-            
-            {/* Sort By */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Sort By</label>
-              <select
-                value={sortBy}
-                onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                <option value="upvotes">Most Upvoted</option>
-                <option value="date">Newest</option>
-                <option value="relevance">Relevance</option>
-              </select>
-            </div>
+          {/* Course Type Filter */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Course Type</label>
+            <select
+              value={courseType}
+              onChange={(e) => handleFilterChange("courseType", e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="">All Types</option>
+              <option value="Lecture">Lecture</option>
+              <option value="Workshop">Workshop</option>
+              <option value="Tutorial">Tutorial</option>
+            </select>
+          </div>
+          
+          {/* Sort By */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Sort By</label>
+            <select
+              value={sortBy}
+              onChange={(e) => handleFilterChange("sortBy", e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="upvotes">Most Upvoted</option>
+              <option value="date">Newest</option>
+              <option value="relevance">Relevance</option>
+            </select>
           </div>
         </div>
-        
-        {/* Results */}
-        {loading ? (
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading study materials...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center py-16 text-red-500">
-            <p className="text-xl mb-4">Something went wrong</p>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={fetchMaterials}>Try Again</Button>
-          </div>
-        ) : materials.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-lg shadow-md">
-            <p className="text-xl mb-4">No study materials found</p>
-            <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
-            <Button onClick={() => updateSearchParams({search: '', difficulty: '', courseType: ''})}>
-              Clear Filters
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {materials.map((material) => (
-              <Link 
-                href={`/market/${material.publicSlug}`}
-                key={material.id} 
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
-              >
-                <div className="p-5">
-                  <h2 className="text-xl font-semibold mb-2 truncate">{material.topic}</h2>
-                  <div className="flex gap-2 text-sm text-gray-600 mb-3">
-                    <span className="px-2 py-1 bg-gray-100 rounded">{material.difficultyLevel}</span>
-                    <span className="px-2 py-1 bg-gray-100 rounded">{material.courseType}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">By {material.createdBy}</p>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-600 hover:underline">
-                      View Details
-                    </span>
-                    
-                    <button
-                      onClick={(e) => handleUpvote(material.id, e)}
-                      className="flex items-center gap-1 text-gray-600 hover:text-blue-600 p-2"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 19V5M5 12l7-7 7 7"/>
-                      </svg>
-                      <span>{material.upvotes || 0}</span>
-                    </button>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-        
-        {/* Pagination */}
-        {!loading && !error && pagination.totalPages > 1 && (
-          <div className="flex justify-center mt-8">
-            <nav className="flex items-center gap-1">
-              <Button 
-                variant="outline" 
-                onClick={() => handlePageChange(Math.max(1, pagination.currentPage - 1))}
-                disabled={pagination.currentPage <= 1}
-                className="px-2 py-1"
-              >
-                ←
-              </Button>
-              
-              {/* Show pagination numbers with ellipsis for many pages */}
-              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                .filter(pageNum => {
-                  // Always show first, last, current, and pages close to current
-                  return pageNum === 1 || 
-                    pageNum === pagination.totalPages || 
-                    Math.abs(pageNum - pagination.currentPage) <= 1;
-                })
-                .map((pageNum, index, filtered) => {
-                  // Add ellipsis where needed
-                  const prevPage = filtered[index - 1];
-                  const showEllipsis = prevPage && pageNum - prevPage > 1;
-                  
-                  return (
-                    <React.Fragment key={pageNum}>
-                      {showEllipsis && <span className="px-2">...</span>}
-                      <Button
-                        variant={pageNum === pagination.currentPage ? "default" : "outline"}
-                        onClick={() => handlePageChange(pageNum)}
-                        className="w-10 h-10"
-                      >
-                        {pageNum}
-                      </Button>
-                    </React.Fragment>
-                  );
-                })
-              }
-              
-              <Button 
-                variant="outline" 
-                onClick={() => handlePageChange(Math.min(pagination.totalPages, pagination.currentPage + 1))}
-                disabled={pagination.currentPage >= pagination.totalPages}
-                className="px-2 py-1"
-              >
-                →
-              </Button>
-            </nav>
-          </div>
-        )}
       </div>
+      
+      {/* Results */}
+      {loading ? (
+        <div className="text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading study materials...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-16 text-red-500">
+          <p className="text-xl mb-4">Something went wrong</p>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={fetchMaterials}>Try Again</Button>
+        </div>
+      ) : materials.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-lg shadow-md">
+          <p className="text-xl mb-4">No study materials found</p>
+          <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
+          <Button onClick={() => updateSearchParams({search: '', difficulty: '', courseType: ''})}>
+            Clear Filters
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {materials.map((material) => (
+            <Link 
+              href={`/market/${material.publicSlug}`}
+              key={material.id} 
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
+            >
+              <div className="p-5">
+                <h2 className="text-xl font-semibold mb-2 truncate">{material.topic}</h2>
+                <div className="flex gap-2 text-sm text-gray-600 mb-3">
+                  <span className="px-2 py-1 bg-gray-100 rounded">{material.difficultyLevel}</span>
+                  <span className="px-2 py-1 bg-gray-100 rounded">{material.courseType}</span>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">By {material.createdBy}</p>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-blue-600 hover:underline">
+                    View Details
+                  </span>
+                  
+                  <button
+                    onClick={(e) => handleUpvote(material.id, e)}
+                    className="flex items-center gap-1 text-gray-600 hover:text-blue-600 p-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 19V5M5 12l7-7 7 7"/>
+                    </svg>
+                    <span>{material.upvotes || 0}</span>
+                  </button>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+      
+      {/* Pagination */}
+      {!loading && !error && pagination.totalPages > 1 && (
+        <div className="flex justify-center mt-8">
+          <nav className="flex items-center gap-1">
+            <Button 
+              variant="outline" 
+              onClick={() => handlePageChange(Math.max(1, pagination.currentPage - 1))}
+              disabled={pagination.currentPage <= 1}
+              className="px-2 py-1"
+            >
+              ←
+            </Button>
+            
+            {/* Show pagination numbers with ellipsis for many pages */}
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+              .filter(pageNum => {
+                // Always show first, last, current, and pages close to current
+                return pageNum === 1 || 
+                  pageNum === pagination.totalPages || 
+                  Math.abs(pageNum - pagination.currentPage) <= 1;
+              })
+              .map((pageNum, index, filtered) => {
+                // Add ellipsis where needed
+                const prevPage = filtered[index - 1];
+                const showEllipsis = prevPage && pageNum - prevPage > 1;
+                
+                return (
+                  <React.Fragment key={pageNum}>
+                    {showEllipsis && <span className="px-2">...</span>}
+                    <Button
+                      variant={pageNum === pagination.currentPage ? "default" : "outline"}
+                      onClick={() => handlePageChange(pageNum)}
+                      className="w-10 h-10"
+                    >
+                      {pageNum}
+                    </Button>
+                  </React.Fragment>
+                );
+              })
+            }
+            
+            <Button 
+              variant="outline" 
+              onClick={() => handlePageChange(Math.min(pagination.totalPages, pagination.currentPage + 1))}
+              disabled={pagination.currentPage >= pagination.totalPages}
+              className="px-2 py-1"
+            >
+              →
+            </Button>
+          </nav>
+        </div>
+      )}
+    </div>
   );
 } 

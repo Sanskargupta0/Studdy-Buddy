@@ -4,23 +4,29 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Outfit } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
-import { AppProvider } from "./_context/AppContext";
+import { MemoizedAppProvider } from "./_context/AppContext";
 
 const outfit = Outfit({
   subsets: ["latin"],
+  display: 'swap', // Optimize font loading
 });
 
-// Change to client component to support zen mode
+// Memoized layout component for better performance
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider appearance={{ baseTheme: outfit.className }} dynamic={true}>
       <html lang="en" suppressHydrationWarning>
         <body className={outfit.className}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <AppProvider>
+          <ThemeProvider 
+            attribute="class" 
+            defaultTheme="system" 
+            enableSystem
+            disableTransitionOnChange // Reduce layout shift
+          >
+            <MemoizedAppProvider>
               {children}
-              <Toaster />
-            </AppProvider>
+              <Toaster position="top-center" richColors closeButton />
+            </MemoizedAppProvider>
           </ThemeProvider>
         </body>
       </html>

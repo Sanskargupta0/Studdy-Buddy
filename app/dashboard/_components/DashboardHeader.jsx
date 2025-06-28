@@ -2,24 +2,114 @@
 
 import { UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { Volume2, VolumeX, Zap, Moon, Sun, Menu, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
 import { useApp } from "@/app/_context/AppContext";
 import { cn } from "@/lib/utils";
 
+// Memoized header controls to prevent unnecessary re-renders
+const HeaderControls = memo(({ 
+  zenMode, 
+  toggleZenMode, 
+  isDark, 
+  toggleTheme,
+  onBurgerClick 
+}) => (
+  <div className="flex items-center gap-2 sm:gap-3">
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 rounded-full"
+            onClick={toggleZenMode}
+            aria-label={zenMode ? "Disable zen mode" : "Enable zen mode"}
+          >
+            {zenMode ? (
+              <VolumeX className="h-4 w-4" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{zenMode ? "Disable zen mode" : "Enable zen mode"}</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 rounded-full"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDark ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{isDark ? "Light mode" : "Dark mode"}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+
+    <div className="hidden md:block">
+      <UserButton afterSignOutUrl="/" />
+    </div>
+
+    <Button
+      variant="ghost"
+      size="icon"
+      className="md:hidden h-9 w-9"
+      onClick={onBurgerClick}
+      aria-label="Toggle menu"
+    >
+      <Menu className="h-5 w-5" />
+    </Button>
+  </div>
+));
+
+HeaderControls.displayName = 'HeaderControls';
+
 function DashboardHeader({ onBurgerClick, className, ...props }) {
-  const { zenMode, toggleZenMode, credits, isMember, loading: creditsLoading } = useApp();
+  // All hooks must be called unconditionally at the top level
+  const { zenMode, toggleZenMode, loading: creditsLoading, isMember,credits } = useApp();
   const pathname = usePathname();
   const [audio, setAudio] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
-
+  
+  // Memoize the header content to prevent unnecessary re-renders
+  const headerContent = useMemo(() => ({
+    title: pathname.split('/').pop().charAt(0).toUpperCase() + pathname.split('/').pop().slice(1) || 'Dashboard',
+    icon: pathname.includes('create') ? <Zap className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />
+  }), [pathname]);
+  
+  // Memoized theme toggle function with animation
+  const toggleTheme = useCallback(() => {
+    const newTheme = isDark ? 'light' : 'dark';
+    setTheme(newTheme);
+    
+    // Add animation class to body
+    document.body.classList.add('theme-transition');
+    setTimeout(() => {
+      document.body.classList.remove('theme-transition');
+    }, 300);
+  }, [isDark, setTheme]);
+  
   // Initialize audio on component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -66,17 +156,6 @@ function DashboardHeader({ onBurgerClick, className, ...props }) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  // Toggle theme with animation
-  const toggleTheme = useCallback(() => {
-    setTheme(isDark ? 'light' : 'dark');
-    
-    // Add animation class to body
-    document.body.classList.add('theme-transition');
-    setTimeout(() => {
-      document.body.classList.remove('theme-transition');
-    }, 300);
-  }, [isDark, setTheme]);
 
   // Don't render on server to avoid hydration mismatch
   if (!isMounted) {
@@ -293,4 +372,9 @@ function DashboardHeader({ onBurgerClick, className, ...props }) {
   );
 }
 
-export default React.memo(DashboardHeader);
+// Memoize the entire component to prevent unnecessary re-renders
+export default memo(DashboardHeader, (prevProps, nextProps) => {
+  // Only re-render if props have changed
+  return prevProps.className === nextProps.className && 
+         prevProps.onBurgerClick === nextProps.onBurgerClick;
+});

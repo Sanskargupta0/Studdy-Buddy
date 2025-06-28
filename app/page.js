@@ -1,66 +1,132 @@
+"use client"
+
 import React from "react";
-import { ArrowRight, BookOpen, Brain, FileText, Sparkles, Github } from "lucide-react";
+import { ArrowRight, BookOpen, Brain, FileText, Sparkles, Github, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button"
 
 import Image from "next/image";
 import Link from "next/link";
 
 const LandingPage = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Navigation Bar */}
-      <nav className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center space-x-2">
-          <Image src={"/logo.svg"} alt="logo" width={40} height={40} />
-          <span className="text-xl md:text-2xl font-bold">StuddyBuddy</span>
+      <nav className="bg-white border-b border-gray-200 fixed w-full z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 flex items-center">
+                <Image src={"/logo.svg"} alt="logo" width={32} height={32} className="h-8 w-auto" />
+                <span className="ml-2 text-xl font-bold text-gray-900">StuddyBuddy</span>
+              </div>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <a href="#features" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Features
+                </a>
+                <a href="#how-it-works" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  How It Works
+                </a>
+                <a href="#testimonials" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Testimonials
+                </a>
+              </div>
+            </div>
+            <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
+              <a
+                href="https://github.com/Sanskargupta0/Studdy-Buddy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
+              >
+                <Github className="h-4 w-4 mr-2" />
+                <span>GitHub</span>
+              </a>
+              <Link href="/dashboard">
+                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
+                  Dashboard
+                </button>
+              </Link>
+            </div>
+            <div className="-mr-2 flex items-center sm:hidden">
+              <button type="button" className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500" aria-expanded="false" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                <span className="sr-only">Open main menu</span>
+                {isMobileMenuOpen ? (
+                  <X className="block h-6 w-6" aria-hidden="true" />
+                ) : (
+                  <Menu className="block h-6 w-6" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center space-x-2 md:space-x-4">
-          <a
-            href=""
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 md:px-4 py-2 text-gray-700 hover:text-blue-600 rounded-lg border border-gray-200 flex items-center space-x-1 md:space-x-2 text-sm md:text-base"
-          >
-            <Github className="w-4 h-4 md:w-5 md:h-5" />
-            <span>GitHub</span>
-          </a>
-          <Link href="/dashboard">
-            <button className="px-3 md:px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 text-sm md:text-base">
-              Dashboard
-            </button>
-          </Link>
+
+        {/* Mobile menu */}
+        <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:hidden`}>
+          <div className="pt-2 pb-3 space-y-1 bg-white">
+            <a href="#features" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300">
+              Features
+            </a>
+            <a href="#how-it-works" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300">
+              How It Works
+            </a>
+            <a href="#testimonials" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300">
+              Testimonials
+            </a>
+            <div className="pt-4 pb-3 border-t border-gray-200">
+              <div className="flex items-center px-4 space-x-3">
+                <a
+                  href="https://github.com/yourusername/studdy-buddy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  <Github className="h-4 w-4 mr-2" />
+                  <span>GitHub</span>
+                </a>
+                <Link href="/dashboard" className="w-full">
+                  <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+                    Dashboard
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </nav>
 
-      <main className="flex min-h-screen flex-col">
+      <main className="flex min-h-screen flex-col pt-16">
         {/* Hero Section */}
         <section className="relative bg-gradient-to-b from-purple-50 to-white py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col lg:flex-row items-center gap-12">
               <div className="flex-1 space-y-6">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900">
-                  Transform Your Learning with{" "}
-                  <span className="text-purple-600">AI-Powered</span> Study
-                  Materials
+                  Create Perfect Study Materials
+                  <span className="text-purple-600 block">In Seconds</span>
                 </h1>
                 <p className="text-xl text-gray-600 max-w-2xl">
-                  StuddyBuddy generates personalized study materials tailored to
-                  your learning style, saving you time and improving retention.
+                  Just type your content, select difficulty level, and let our AI create
+                  personalized study materials to boost your learning.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <Button
-                    size="lg"
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    Get Started Free
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button size="lg" variant="outline">
-                    See How It Works
-                  </Button>
+                  <Link href="/dashboard">
+                    <Button
+                      size="lg"
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      Start Creating Now
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard">
+                    <Button size="lg" variant="outline">
+                      Try for Free
+                    </Button>
+                  </Link>
                 </div>
                 <div className="pt-4 text-sm text-gray-500">
-                  No credit card required • Free plan available
+                  No credit card required • Start learning effectively today
                 </div>
               </div>
               <div className="flex-1 relative">
@@ -88,7 +154,7 @@ const LandingPage = () => {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -155,14 +221,14 @@ const LandingPage = () => {
         </section>
 
         {/* How It Works Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                How StuddyBuddy Works
+                How It Works
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Generate personalized study materials in three simple steps
+                Create your perfect study materials in just three easy steps
               </p>
             </div>
 
@@ -170,21 +236,21 @@ const LandingPage = () => {
               {[
                 {
                   step: "01",
-                  title: "Upload Your Content",
+                  title: "Enter Your Content",
                   description:
-                    "Upload lecture notes, textbooks, or any learning material you want to study.",
+                    "Type or paste your study material, notes, or any text you want to learn from.",
                 },
                 {
                   step: "02",
-                  title: "Select Your Format",
+                  title: "Set Difficulty Level",
                   description:
-                    "Choose from flashcards, summaries, practice tests, or custom formats.",
+                    "Choose the complexity level that matches your current understanding.",
                 },
                 {
                   step: "03",
-                  title: "Get Your Materials",
+                  title: "Generate & Learn",
                   description:
-                    "Receive AI-generated study materials tailored to your learning style.",
+                    "Get instant, personalized study materials optimized for your needs.",
                 },
               ].map((step, index) => (
                 <div key={index} className="relative">
@@ -246,7 +312,7 @@ const LandingPage = () => {
                     <p className="text-gray-700 italic mb-6 flex-grow">
                       "{testimonial.quote}"
                     </p>
-                    <div>
+                    <div className="col-span-1 md:col-span-2 lg:col-span-2">
                       <p className="font-semibold">{testimonial.name}</p>
                       <p className="text-gray-500 text-sm">
                         {testimonial.role}
@@ -263,84 +329,36 @@ const LandingPage = () => {
         <section className="py-20 px-4 sm:px-6 lg:px-8 bg-purple-600">
           <div className="max-w-5xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Ready to Transform Your Learning Experience?
+              Ready to Study Smarter?
             </h2>
             <p className="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">
-              Join thousands of students and educators who are already using
-              StuddyBuddy to create personalized study materials.
+              Join students who are already learning more effectively with
+              AI-generated study materials.
             </p>
-            <Button
-              size="lg"
-              className="bg-white text-purple-600 hover:bg-gray-100"
-            >
-              Get Started Free
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <Link href="/dashboard">
+              <Button
+                size="lg"
+                className="bg-white text-purple-600 hover:bg-gray-100"
+              >
+                Start Learning Now
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
             <p className="mt-4 text-purple-200 text-sm">
-              No credit card required • Free plan available
+              No credit card required • Start for free
             </p>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="bg-gray-900 text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div className="col-span-1 md:col-span-2">
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  StuddyBuddy
-                </h3>
-                <p className="mb-4 max-w-md">
-                  AI-powered study material generator for students and
-                  educators. Transform your learning experience today.
-                </p>
-                <div className="flex space-x-4">
-                  {["Twitter", "Facebook", "Instagram", "LinkedIn"].map(
-                    (social) => (
-                      <a key={social} href="#" className="hover:text-white">
-                        {social}
-                      </a>
-                    )
-                  )}
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-white mb-4">
-                  Product
-                </h4>
-                <ul className="space-y-2">
-                  {["Features", "Pricing", "Testimonials", "FAQ"].map(
-                    (item) => (
-                      <li key={item}>
-                        <a href="#" className="hover:text-white">
-                          {item}
-                        </a>
-                      </li>
-                    )
-                  )}
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-white mb-4">
-                  Company
-                </h4>
-                <ul className="space-y-2">
-                  {["About", "Blog", "Careers", "Contact"].map((item) => (
-                    <li key={item}>
-                      <a href="#" className="hover:text-white">
-                        {item}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-gray-800 mt-12 pt-8 text-sm text-center">
+        <footer className="bg-gray-900 text-gray-300 py-16 px-4 sm:px-6 lg:px-8">
+        
+            <div className="border-gray-800 text-sm text-center text-gray-400">
               <p>
-                © {new Date().getFullYear()} StuddyBuddy. All rights reserved.
+                {new Date().getFullYear()} StuddyBuddy. All rights reserved.
               </p>
             </div>
-          </div>
+          
         </footer>
       </main>
     </div>

@@ -1,16 +1,52 @@
 "use client";
-import { memo, useCallback, useState, useEffect } from "react";
+import { memo, useCallback, useState, useEffect, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
-// Dynamically import heavy components
-const SideBar = dynamic(() => import('./SideBar'), { ssr: false });
-const DashboardHeader = dynamic(() => import('./DashboardHeader'), { ssr: false });
+// Memoized dynamic imports with loading fallback
+const SideBar = dynamic(
+  () => import('./SideBar').then(mod => memo(mod.default)), 
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-64 bg-background/95 border-r border-border" />
+    )
+  }
+);
+
+const DashboardHeader = dynamic(
+  () => import('./DashboardHeader').then(mod => memo(mod.default)),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-16 border-b border-border bg-background/80" />
+    )
+  }
+);
+
+// Memoized layout components
+const MemoizedSidebar = memo(({ isMobile, closeSidebar }) => (
+  <aside 
+    className={`fixed z-30 h-full w-64 border-r border-border bg-background/95 backdrop-blur-sm ${
+      isMobile ? 'md:hidden' : 'hidden md:block'
+    }`}
+    aria-label="Main navigation"
+  >
+    <SideBar closeSidebar={closeSidebar} />
+  </aside>
+));
+
+const MemoizedHeader = memo(({ toggleSidebar }) => (
+  <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-sm">
+    <DashboardHeader onBurgerClick={toggleSidebar} />
+  </header>
+));
 
 function DashboardLayoutClient({ children }) {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -18,6 +54,11 @@ function DashboardLayoutClient({ children }) {
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(prev => !prev);
   }, []);
+
+  // Close sidebar when route changes
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     setMounted(true);
@@ -28,6 +69,11 @@ function DashboardLayoutClient({ children }) {
       router.push("/sign-in");
     }
   }, [isLoaded, user, router]);
+
+  // Memoize the closeSidebar function
+  const closeSidebar = useCallback(() => {
+    setSidebarOpen(false);
+  }, []);
 
   if (!mounted || !isLoaded || !user) {
     return (
@@ -48,22 +94,15 @@ function DashboardLayoutClient({ children }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-200">
-      {/* Sidebar for desktop */}
-      <aside 
-        className="hidden md:block fixed z-30 h-full w-64 border-r border-border bg-background/95 backdrop-blur-sm"
-        aria-label="Main navigation"
-      >
-        <SideBar />
-      </aside>
+      {/* Desktop Sidebar */}
+      <MemoizedSidebar isMobile={false} closeSidebar={closeSidebar} />
       
-      {/* Sidebar drawer for mobile */}
+      {/* Mobile Sidebar Overlay */}
       <div 
         className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden ${
-          sidebarOpen 
-            ? 'opacity-100 visible' 
-            : 'opacity-0 invisible pointer-events-none'
+          sidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
         }`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={closeSidebar}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
@@ -75,14 +114,12 @@ function DashboardLayoutClient({ children }) {
           }`}
           onClick={e => e.stopPropagation()}
         >
-          <SideBar closeSidebar={() => setSidebarOpen(false)} />
+          <MemoizedSidebar isMobile={true} closeSidebar={closeSidebar} />
         </div>
       </div>
       
       <div className="md:ml-64 min-h-screen flex flex-col transition-spacing duration-200">
-        <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-sm">
-          <DashboardHeader onBurgerClick={toggleSidebar} />
-        </header>
+        <MemoizedHeader toggleSidebar={toggleSidebar} />
         
         <main 
           id="main-content"

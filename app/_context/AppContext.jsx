@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useMemo, memo } from "react";
 import { useUser } from "@clerk/nextjs";
 import axios from "axios";
 
@@ -25,7 +25,8 @@ export const AppContext = createContext({
   setTotalCourses: () => {},
 });
 
-export function AppProvider({ children }) {
+// Memoized provider component to prevent unnecessary re-renders
+function AppProvider({ children }) {
   const { user, isLoaded: isUserLoaded } = useUser();
   
   // User state
@@ -35,23 +36,23 @@ export function AppProvider({ children }) {
   const [error, setError] = useState(null);
   
   // Course state
-  const [totalCourses, setTotalCourses] = useState(0);
+  const [totalCourses, setTotalCoursesState] = useState(0);
   
   // UI state
-  const [zenMode, setZenMode] = useState(false);
+  const [zenMode, setZenModeState] = useState(false);
 
   // Initialize from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedZenMode = localStorage.getItem('zenMode');
       if (savedZenMode !== null) {
-        setZenMode(savedZenMode === 'true');
+        setZenModeState(savedZenMode === 'true');
       }
     }
   }, []);
 
-  // Fetch user credits and membership status
-  const fetchUserCredits = async () => {
+  // Memoized fetch user credits function
+  const fetchUserCredits = useCallback(async () => {
     if (!user || !isUserLoaded) return;
     
     setLoading(true);
@@ -68,16 +69,16 @@ export function AppProvider({ children }) {
       const response = await axios.get(`/api/credits?email=${email}`);
       setCredits(response.data.credits);
       setIsMember(response.data.isMember);
-    } catch (error) {
-      console.error("Error fetching user credits:", error);
+    } catch (err) {
+      console.error("Error fetching user credits:", err);
       setError("Failed to load user credits");
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, isUserLoaded]);
 
-  // Decrement credits by 1
-  const decrementCredits = async () => {
+  // Memoized decrement credits function
+  const decrementCredits = useCallback(async () => {
     if (!user) return false;
     
     try {
@@ -88,51 +89,56 @@ export function AppProvider({ children }) {
       setIsMember(response.data.isMember);
       
       return response.data.success;
-    } catch (error) {
-      console.error("Error decrementing credits:", error);
+    } catch (err) {
+      console.error("Error decrementing credits:", err);
       return false;
     }
-  };
+  }, [user]);
 
-  // Toggle zen mode
-  const toggleZenMode = () => {
-    const newValue = !zenMode;
-    setZenMode(newValue);
-    
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('zenMode', newValue.toString());
-    }
-  };
+  // Memoized toggle zen mode function
+  const toggleZenMode = useCallback(() => {
+    setZenModeState(prevZenMode => {
+      const newValue = !prevZenMode;
+      
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('zenMode', newValue);
+      }
+      
+      return newValue;
+    });
+  }, []);
 
-  // Fetch user credits when user changes
+  // Fetch credits when user changes
   useEffect(() => {
-    if (user && isUserLoaded) {
+    if (isUserLoaded) {
       fetchUserCredits();
-    } else {
-      setLoading(false);
     }
-  }, [user, isUserLoaded]);
+  }, [isUserLoaded, fetchUserCredits]);
 
-  // Context value
-  const value = {
-    // User state
+  // Memoized context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
     credits,
     isMember,
     loading,
     error,
-    
-    // Course state
     totalCourses,
-    setTotalCourses,
-    
-    // UI state
     zenMode,
-    
-    // Methods
     refreshCredits: fetchUserCredits,
     decrementCredits,
     toggleZenMode,
-  };
+    setTotalCourses: setTotalCoursesState,
+  }), [
+    credits, 
+    isMember, 
+    loading, 
+    error, 
+    totalCourses, 
+    zenMode, 
+    fetchUserCredits, 
+    decrementCredits, 
+    toggleZenMode
+  ]);  
 
   return (
     <AppContext.Provider value={value}>
@@ -141,11 +147,14 @@ export function AppProvider({ children }) {
   );
 }
 
+// Memoize the provider to prevent unnecessary re-renders
+export const MemoizedAppProvider = memo(AppProvider);
+
 // Custom hook for using app context
 export function useApp() {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error("useApp must be used within an AppProvider");
+    throw new Error('useApp must be used within an AppProvider');
   }
   return context;
 }

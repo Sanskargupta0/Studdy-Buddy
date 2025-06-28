@@ -5,13 +5,41 @@ import { LayoutDashboard, Shield, AlertTriangle, Store } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useApp } from "@/app/_context/AppContext";
 
+// Memoized menu item component to prevent unnecessary re-renders
+const MenuItem = memo(({ menu, isActive, onClick }) => {
+  const Icon = menu.icon;
+  
+  return (
+    <li key={`menu-${menu.path.toLowerCase().replace(/\//g, '')}`}>
+      <Link
+        href={menu.path}
+        onClick={onClick}
+        className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors text-sm font-medium
+          ${
+            isActive
+              ? "bg-accent text-accent-foreground"
+              : "text-foreground/80 hover:bg-accent/50 hover:text-foreground"
+          }
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
+        aria-current={isActive ? "page" : undefined}
+      >
+        <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+        <span>{menu.name}</span>
+      </Link>
+    </li>
+  );
+});
+
+MenuItem.displayName = 'MenuItem';
+
+// Main Sidebar component
 function SideBar({ closeSidebar }) {
-  const MenuList = [
+  const menuItems = useMemo(() => [
     {
       name: "Dashboard",
       icon: LayoutDashboard,
@@ -27,21 +55,21 @@ function SideBar({ closeSidebar }) {
       icon: Shield,
       path: "/dashboard/upgrade",
     },
-  ];
+  ], []);
 
   const {
-    totalCourses: totalCourse,
     credits,
     isMember,
     loading: creditsLoading,
     zenMode,
   } = useApp();
+  
   const path = usePathname();
   const router = useRouter();
   const { user } = useUser();
 
-  // Handle click on "Create New" when user has no credits
-  const handleCreateNew = async (e) => {
+  // Memoize the create new handler
+  const handleCreateNew = useCallback(async (e) => {
     if (!isMember && credits <= 0) {
       e.preventDefault();
       toast.error(
@@ -55,7 +83,90 @@ function SideBar({ closeSidebar }) {
       );
       return false;
     }
-  };
+  }, [isMember, credits, router]);
+
+  // Memoize the upgrade handler
+  const handleUpgrade = useCallback(() => {
+    router.push("/dashboard/upgrade");
+  }, [router]);
+
+  // Memoize the logo and header to prevent re-renders
+  const logoAndHeader = useMemo(() => (
+    <div className="flex gap-2 items-center justify-between">
+      <div className="flex gap-2 items-center">
+        <Image
+          src={"/logo.svg"}
+          alt=""
+          width={40}
+          height={40}
+          className="flex-shrink-0"
+          aria-hidden="true"
+          priority
+        />
+        <h2 className="font-bold text-2xl text-foreground">
+          <Link
+            href="/dashboard"
+            className="hover:opacity-80 transition-opacity"
+            onClick={closeSidebar}
+          >
+            <span className="sr-only">Studdy Buddy</span>
+            <span aria-hidden="true">Studdy Buddy</span>
+          </Link>
+        </h2>
+      </div>
+      {closeSidebar && (
+        <button
+          className="p-1.5 rounded-md hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-colors md:hidden"
+          onClick={closeSidebar}
+          aria-label="Close sidebar"
+        >
+          <svg
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-x"
+            aria-hidden="true"
+          >
+            <title>Close menu</title>
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      )}
+    </div>
+  ), [closeSidebar]);
+
+  // Memoize the create button
+  const createButton = useMemo(() => (
+    <Link
+      href={"/create"}
+      className="w-full block"
+      onClick={handleCreateNew}
+      aria-label="Create new course"
+    >
+      <Button className="w-full h-10 text-sm font-medium">
+        <span className="mr-1">+</span> Create New
+      </Button>
+    </Link>
+  ), [handleCreateNew]);
+
+  // Memoize the menu items
+  const renderedMenuItems = useMemo(() => (
+    <ul className="space-y-1 mt-6">
+      {menuItems.map((menu) => (
+        <MenuItem 
+          key={menu.path}
+          menu={menu}
+          isActive={path === menu.path}
+          onClick={closeSidebar}
+        />
+      ))}
+    </ul>
+  ), [menuItems, path, closeSidebar]);
 
   return (
     <div
@@ -64,101 +175,23 @@ function SideBar({ closeSidebar }) {
       }`}
       aria-label="Sidebar navigation"
     >
-      <div className="flex gap-2 items-center justify-between">
-        <div className="flex gap-2 items-center">
-          <Image
-            src={"/logo.svg"}
-            alt=""
-            width={40}
-            height={40}
-            className="flex-shrink-0"
-            aria-hidden="true"
-          />
-          <h2 className="font-bold text-2xl text-foreground">
-            <Link
-              href="/dashboard"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <span className="sr-only">Studdy Buddy</span>
-              <span aria-hidden="true">Studdy Buddy</span>
-            </Link>
-          </h2>
-        </div>
-        {closeSidebar && (
-          <button
-            className="p-1.5 rounded-md hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-colors md:hidden"
-            onClick={closeSidebar}
-            aria-label="Close sidebar"
-          >
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-x"
-            >
-              <title>Close menu</title>
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        )}
-      </div>
+      {logoAndHeader}
 
       <nav className="mt-10" aria-label="Main navigation">
         <div className="space-y-1">
-          <Link
-            href={"/create"}
-            className="w-full block"
-            onClick={handleCreateNew}
-            aria-label="Create new course"
-          >
-            <Button className="w-full h-10 text-sm font-medium">
-              <span className="mr-1">+</span> Create New
-            </Button>
-          </Link>
-
-          <ul className="space-y-1 mt-6">
-            {MenuList.map((menu) => {
-              const isActive = path === menu.path;
-              const Icon = menu.icon;
-
-              return (
-                <li key={`menu-${menu.path.toLowerCase().replace("/", "")}`}>
-                  <Link
-                    href={menu.path}
-                    className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors text-sm font-medium
-                      ${
-                        isActive
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground/80 hover:bg-accent/50 hover:text-foreground"
-                      }
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    <Icon
-                      className="h-5 w-5 flex-shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span>{menu.name}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          {createButton}
+          {renderedMenuItems}
         </div>
       </nav>
 
+      {/* Memoize the subscription status component */}
       {!creditsLoading && (
         <div className="border border-border p-4 bg-card/80 backdrop-blur-sm rounded-lg mt-auto mb-6 text-card-foreground shadow-sm">
           {isMember ? (
             // Premium member display
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Shield className="h-5 w-5 text-primary" aria-hidden="true" />
+                <Shield className="h-5 w-5 text-primary flex-shrink-0" aria-hidden="true" />
                 <h2 className="text-base font-medium text-primary">
                   Premium Plan
                 </h2>
@@ -170,6 +203,7 @@ function SideBar({ closeSidebar }) {
                 href="/dashboard/upgrade"
                 className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                 aria-label="Manage your premium subscription"
+                onClick={closeSidebar}
               >
                 Manage subscription
                 <svg
@@ -182,7 +216,7 @@ function SideBar({ closeSidebar }) {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="ml-1 h-3.5 w-3.5"
+                  className="ml-1 h-3.5 w-3.5 flex-shrink-0"
                   aria-hidden="true"
                 >
                   <path d="m9 18 6-6-6-6" />
@@ -249,4 +283,5 @@ function SideBar({ closeSidebar }) {
   );
 }
 
-export default SideBar;
+// Wrap the component with React.memo for performance optimization
+export default memo(SideBar);

@@ -3,14 +3,15 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle } from "lucide-react";
-import { useAppState } from "../_context/AppStateContext";
+import { useApp } from "../_context/AppContext";
+import DashboardLayoutClient from "../dashboard/_components/DashboardLayoutClient";
 
 function PaymentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState("processing");
   const sessionId = searchParams.get("session_id");
-  const { refreshCredits } = useAppState();
+  const { refreshCredits } = useApp();
 
   useEffect(() => {
     if (sessionId) {
@@ -67,8 +68,10 @@ function PaymentContent() {
 
 export default function PaymentSuccess() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <PaymentContent />
-    </Suspense>
+    <DashboardLayoutClient>
+      <Suspense fallback={<div>Loading...</div>}>
+        <PaymentContent />
+      </Suspense>
+    </DashboardLayoutClient>
   );
 }

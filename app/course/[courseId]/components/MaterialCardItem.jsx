@@ -55,42 +55,81 @@ const MaterialCardItem = ({ item, studyTypeContent, course, refreshData }) => {
   const contentReady = isContentReady();
 
   return (
-    <Link href={"/course/" + course?.courseId + item.path}>
-      <div
-        className={`border shadow-md rounded-lg p-5 flex flex-col items-center ${
-          !contentReady && "grayscale"
-        }`}
-      >
-        {!contentReady ? (
-          <h2 className="p-1 px-2 bg-gray-500 text-white rounded-full text-[10px] mb-2">
-            Generate
-          </h2>
-        ) : (
-          <h2 className="p-1 px-2 bg-green-500 text-white rounded-full text-[10px] mb-2">
-            Ready
-          </h2>
-        )}
+    <div className="h-full">
+      <Link href={"/course/" + course?.courseId + item.path} className="block h-full">
+        <div
+          className={`h-full flex flex-col border border-border bg-card rounded-xl p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${
+            !contentReady ? 'opacity-80 hover:opacity-100' : 'hover:shadow-primary/10'
+          }`}
+        >
+          {/* Status Badge */}
+          <div className="flex justify-between items-start mb-4">
+            {!contentReady ? (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
+                Not Generated
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                Ready
+              </span>
+            )}
+            
+            {!contentReady && loading && (
+              <RefreshCcw className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+            )}
+          </div>
 
-        <Image src={item.icon} alt={item.name} width={50} height={50} />
-        <h2 className="font-medium mt-3">{item.name}</h2>
-        <p className="text-gray-500 text-sm text-center">{item.desc}</p>
+          {/* Icon */}
+          <div className="flex-1 flex flex-col items-center text-center">
+            <div className="p-3 mb-4 rounded-lg bg-primary/5 dark:bg-primary/10">
+              <Image 
+                src={item.icon} 
+                alt={item.name} 
+                width={40} 
+                height={40}
+                className="w-10 h-10 object-contain"
+              />
+            </div>
+            
+            <h3 className="text-lg font-medium text-foreground">{item.name}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
+          </div>
 
-        {!contentReady ? (
-          <Button
-            className="mt-3 w-full"
-            variant="outline"
-            onClick={GenerateContent}
-          >
-            {loading && <RefreshCcw className="animate-spin" />}
-            Generate
-          </Button>
-        ) : (
-          <Button className="mt-3 w-full" variant="outline">
-            View
-          </Button>
-        )}
-      </div>
-    </Link>
+          {/* Action Button */}
+          <div className="mt-6">
+            {!contentReady ? (
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  GenerateContent(e);
+                }}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <RefreshCcw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Content'
+                )}
+              </Button>
+            ) : (
+              <Button className="w-full" variant="default">
+                View {item.name}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2">
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Button>
+            )}
+          </div>
+        </div>
+      </Link>
+    </div>
   );
 };
 

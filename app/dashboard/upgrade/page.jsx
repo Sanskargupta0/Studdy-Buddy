@@ -8,7 +8,13 @@ import { eq } from "drizzle-orm";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
-export default function PricingPlans() {
+export default function UpgradePage() {
+  return (
+      <PricingPlans />
+  );
+}
+
+function PricingPlans() {
   const user = useUser();
   const [userDetail, setUserDetail] = useState(null);
   const [loading, setLoading] = useState(true);

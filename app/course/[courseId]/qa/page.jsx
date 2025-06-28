@@ -90,4 +90,8 @@ function QnAPage() {
   );
 }
 
-export default QnAPage;
+export default function QnAPageWrapper() {
+  return (
+      <QnAPage />
+  );
+}

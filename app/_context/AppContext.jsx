@@ -4,32 +4,48 @@ import { createContext, useState, useEffect, useContext } from "react";
 import { useUser } from "@clerk/nextjs";
 import axios from "axios";
 
-// Create AppState context
-export const AppStateContext = createContext({
+// Create the context with default values
+export const AppContext = createContext({
+  // User state
   credits: 0,
   isMember: false,
-  zenModeActive: false,
   loading: true,
   error: null,
+  
+  // Course state
+  totalCourses: 0,
+  
+  // UI state
+  zenMode: false,
+  
+  // Methods
   refreshCredits: () => {},
   decrementCredits: () => {},
   toggleZenMode: () => {},
+  setTotalCourses: () => {},
 });
 
-export function AppStateProvider({ children }) {
+export function AppProvider({ children }) {
+  const { user, isLoaded: isUserLoaded } = useUser();
+  
+  // User state
   const [credits, setCredits] = useState(0);
   const [isMember, setIsMember] = useState(false);
-  const [zenModeActive, setZenModeActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user, isLoaded: isUserLoaded } = useUser();
+  
+  // Course state
+  const [totalCourses, setTotalCourses] = useState(0);
+  
+  // UI state
+  const [zenMode, setZenMode] = useState(false);
 
-  // Initialize from localStorage if available
+  // Initialize from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedZenMode = localStorage.getItem('zenMode');
       if (savedZenMode !== null) {
-        setZenModeActive(savedZenMode === 'true');
+        setZenMode(savedZenMode === 'true');
       }
     }
   }, []);
@@ -52,9 +68,6 @@ export function AppStateProvider({ children }) {
       const response = await axios.get(`/api/credits?email=${email}`);
       setCredits(response.data.credits);
       setIsMember(response.data.isMember);
-      
-      // Debug: Log the response from the server
-      console.log("Credits API response:", response.data);
     } catch (error) {
       console.error("Error fetching user credits:", error);
       setError("Failed to load user credits");
@@ -65,20 +78,14 @@ export function AppStateProvider({ children }) {
 
   // Decrement credits by 1
   const decrementCredits = async () => {
-    if (!user) return;
+    if (!user) return false;
     
     try {
       const email = user.primaryEmailAddress?.emailAddress;
-      
-      // Make API call to decrement credits
       const response = await axios.post("/api/credits", { email });
       
-      // Update local state based on response
       setCredits(response.data.remainingCredits);
       setIsMember(response.data.isMember);
-      
-      // Debug: Log the response from the server
-      console.log("Decrement credits response:", response.data);
       
       return response.data.success;
     } catch (error) {
@@ -87,66 +94,58 @@ export function AppStateProvider({ children }) {
     }
   };
 
-  // Function to toggle zen mode
+  // Toggle zen mode
   const toggleZenMode = () => {
-    const newValue = !zenModeActive;
-    setZenModeActive(newValue);
+    const newValue = !zenMode;
+    setZenMode(newValue);
     
-    // Save to localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('zenMode', newValue.toString());
     }
   };
 
-  // Initial fetch
+  // Fetch user credits when user changes
   useEffect(() => {
-    if (isUserLoaded && user) {
+    if (user && isUserLoaded) {
       fetchUserCredits();
+    } else {
+      setLoading(false);
     }
-  }, [isUserLoaded, user]);
+  }, [user, isUserLoaded]);
 
-  // Set up periodic refresh to catch plan changes
-  useEffect(() => {
-    // Refresh credits every 2 minutes to catch plan changes
-    const intervalId = setInterval(() => {
-      if (isUserLoaded && user) {
-        fetchUserCredits();
-      }
-    }, 2 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
-  }, [isUserLoaded, user]);
-
-  // Refresh function to call after purchases or operations
-  const refreshCredits = () => {
-    fetchUserCredits();
-  };
-
+  // Context value
   const value = {
+    // User state
     credits,
     isMember,
-    zenModeActive,
     loading,
     error,
-    refreshCredits,
+    
+    // Course state
+    totalCourses,
+    setTotalCourses,
+    
+    // UI state
+    zenMode,
+    
+    // Methods
+    refreshCredits: fetchUserCredits,
     decrementCredits,
     toggleZenMode,
   };
 
   return (
-    <AppStateContext.Provider value={value}>
+    <AppContext.Provider value={value}>
       {children}
-    </AppStateContext.Provider>
+    </AppContext.Provider>
   );
 }
 
-// Custom hook for using app state
-export function useAppState() {
-  const context = useContext(AppStateContext);
-  
+// Custom hook for using app context
+export function useApp() {
+  const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error("useAppState must be used within an AppStateProvider");
+    throw new Error("useApp must be used within an AppProvider");
   }
-  
   return context;
 }

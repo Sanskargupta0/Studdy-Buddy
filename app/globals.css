@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth theme transitions */
+.theme-transition * {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, text-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
 /* Focus mode styles */
 body.focus-mode {
   position: relative;
@@ -26,28 +33,15 @@ body.focus-mode::after {
   );
 }
 
-/* Zen mode transitions */
-* {
-  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, 
-              box-shadow 0.5s ease, transform 0.3s ease, opacity 0.3s ease;
-}
-
-/* Zen mode typography */
+/* Zen mode styles */
 .zen-mode {
+  /* Add any specific zen mode styles that should apply to the header */
+  background-color: #f8fafc; /* A light gray background for zen mode */
+}
+
+/* Zen mode content container - apply this class to specific content areas that should have zen styling */
+.zen-content {
   font-family: 'Georgia', serif;
-}
-
-.zen-mode h1, .zen-mode h2, .zen-mode h3, 
-.zen-mode h4, .zen-mode h5, .zen-mode h6 {
-  letter-spacing: 0.02em;
-}
-
-.zen-mode p, .zen-mode li {
-  line-height: 1.8;
-}
-
-/* Zen mode container styles */
-.zen-mode-container {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
@@ -56,8 +50,128 @@ body.focus-mode::after {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+.zen-content h1, .zen-content h2, .zen-content h3, 
+.zen-content h4, .zen-content h5, .zen-content h6 {
+  letter-spacing: 0.02em;
+}
+
+.zen-content p, .zen-content li {
+  line-height: 1.8;
+}
+
+/* Base body styles */
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-background text-foreground antialiased;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30;
+}
+
+/* Selection styles */
+::selection {
+  @apply bg-primary/20 text-foreground;
+}
+
+/* Focus styles */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary ring-0;
+}
+
+/* Remove focus for mouse users but keep for keyboard navigation */
+:focus:not(:focus-visible) {
+  @apply outline-none ring-0;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Animation classes */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom utilities */
+.backdrop-blur {
+  backdrop-filter: saturate(180%) blur(12px);
+}
+
+.dark .backdrop-blur {
+  backdrop-filter: saturate(180%) blur(16px);
+}
+
+/* Custom scrollbar for dark mode */
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/40;
+}
+
+/* Custom focus styles for keyboard navigation */
+[data-focus-visible] {
+  @apply ring-2 ring-ring ring-offset-2 ring-offset-background rounded-md outline-none;
+}
+
+/* Custom styles for tooltips and popovers */
+[data-state="open"] {
+  @apply animate-fade-in;
+}
+
+/* Custom styles for skeleton loading */
+.skeleton {
+  @apply bg-muted animate-pulse rounded-md;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0.1) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @layer base {

@@ -54,12 +54,18 @@ const StudyMaterialSection = ({ courseId, course }) => {
   };
 
   return (
-    <div className="mt-5">
-      <h2 className="font-medium text-2xl">Study Material</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mt-3">
-        {MaterialList.map((item, index) => (
+    <section className="mt-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Study Materials</h2>
+          <p className="text-muted-foreground mt-1">Access different learning resources for your course</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {MaterialList.map((item) => (
           <MaterialCardItem
-            key={index}
+            key={`material-${item.type}`}
             item={item}
             studyTypeContent={studyTypeContent}
             course={course}
@@ -67,7 +73,13 @@ const StudyMaterialSection = ({ courseId, course }) => {
           />
         ))}
       </div>
-    </div>
+      
+      <div className="mt-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          Having trouble? Try refreshing the page if content doesn't appear after generation.
+        </p>
+      </div>
+    </section>
   );
 };
 

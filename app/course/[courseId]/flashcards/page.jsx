@@ -74,9 +74,14 @@ function Flashcards() {
           <CarouselContent>
             {flashCards?.content &&
               flashCards.content?.map((flashcard, index) => {
+                // Create a unique key using the flashcard's content (first 10 chars of question and answer)
+                const questionPrefix = flashcard.question?.substring(0, 10)?.replace(/\s+/g, '-') || 'q';
+                const answerPrefix = flashcard.answer?.substring(0, 10)?.replace(/\s+/g, '-') || 'a';
+                const flashcardKey = `flashcard-${index}-${questionPrefix}-${answerPrefix}`;
+                
                 return (
                   <CarouselItem
-                    key={index}
+                    key={flashcardKey}
                     className="flex items-center justify-center"
                   >
                     <FlashcardItem

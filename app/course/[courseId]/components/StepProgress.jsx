@@ -14,14 +14,19 @@ function StepProgress({ stepCount, setStepCount, data }) {
         </Button>
       )}
 
-      {data.map((_, index) => (
-        <div
-          key={index}
-          className={`w-full h-2 rounded-full ${
-            index <= stepCount ? "bg-primary" : "bg-gray-200"
-          }`}
-        ></div>
-      ))}
+      {data.map((_, index) => {
+        // Create a stable key that won't change between renders
+        // but will be unique for each step
+        const stepKey = `step-${index}-${Date.now()}`;
+        return (
+          <div
+            key={stepKey}
+            className={`w-full h-2 rounded-full ${
+              index <= stepCount ? "bg-primary" : "bg-gray-200"
+            }`}
+          />
+        );
+      })}
       <Button
         variant="outline"
         size="sm"

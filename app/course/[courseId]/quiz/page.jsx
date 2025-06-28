@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import StepProgress from "../components/StepProgress";
 import QuizCardItem from "./_components/QuizCardItem";
-import { toast } from "sonner"; // Import toast for notifications
+import { toast } from "sonner"; 
 
 function Quiz() {
   const { courseId } = useParams();
@@ -119,4 +119,8 @@ function Quiz() {
   );
 }
 
-export default Quiz;
+export default function QuizWrapper() {
+  return (
+      <Quiz />
+  );
+}

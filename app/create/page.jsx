@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import DashboardLayoutClient from "../dashboard/_components/DashboardLayoutClient";
 
 function CreateCourse() {
   const [step, setStep] = useState(0);
@@ -41,45 +42,92 @@ function CreateCourse() {
   };
 
   return (
-    <div className="flex flex-col items-center p-5 md:px-24 lg:px-36 mt-20">
-      <h2 className="font-bold text-4xl text-primary ">
-        Start Building your Personal Study Material
-      </h2>
-      <p className="text-gray-500 text-lg">
-        Fill all details in order to generate study material for your next
-        project
-      </p>
-      <div className="mt-10">
-        {step == 0 ? (
-          <SelectOption
-            selectedStudyType={(value) => handleUserInput("courseType", value)}
-          />
-        ) : (
-          <TopicInput
-            setDifficultyLevel={(value) =>
-              handleUserInput("difficultyLevel", value)
-            }
-            setTopic={(value) => handleUserInput("topic", value)}
-          />
-        )}
+    <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
+          Create Your Study Material
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          Follow the steps to generate personalized study content
+        </p>
       </div>
+      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+              1
+            </div>
+            <div className={`w-16 h-1 ${step > 0 ? 'bg-primary' : 'bg-muted'}`}></div>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+              2
+            </div>
+          </div>
+        </div>
 
-      <div className="flex justify-between w-[60%] mt-32">
-        {step != 0 ? (
-          <Button variant="outline" onClick={() => setStep(0)}>
-            Previous
+        <div className="mb-8">
+          {step === 0 ? (
+            <SelectOption
+              selectedStudyType={(value) => handleUserInput("courseType", value)}
+            />
+          ) : (
+            <TopicInput
+              setDifficultyLevel={(value) =>
+                handleUserInput("difficultyLevel", value)
+              }
+              setTopic={(value) => handleUserInput("topic", value)}
+            />
+          )}
+        </div>
+
+        <div className="flex justify-between pt-4 border-t border-border">
+          <div>
+            {step !== 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => setStep(0)}
+                disabled={loading}
+                className="min-w-[100px]"
+              >
+                Back
+              </Button>
+            )}
+          </div>
+          <Button 
+            onClick={step === 0 ? () => setStep(1) : GenerateCourseOutline}
+            disabled={loading}
+            className="min-w-[100px] gap-2"
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating...
+              </>
+            ) : step === 0 ? (
+              'Continue'
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Generate Material
+              </>
+            )}
           </Button>
-        ) : (
-          "-"
-        )}
-        {step == 0 ? (
-          <Button onClick={() => setStep(1)}>Next</Button>
-        ) : (
-          <Button onClick={GenerateCourseOutline}>Generate</Button>
-        )}
+        </div>
       </div>
     </div>
   );
 }
 
-export default CreateCourse;
+export default function CreatePage() {
+  return (
+    <DashboardLayoutClient>
+      <CreateCourse />
+    </DashboardLayoutClient>
+  );
+}

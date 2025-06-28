@@ -1,18 +1,16 @@
 "use client";
-import { CourseCountContext } from "@/app/_context/CourseCountContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { LayoutDashboard, Shield, AlertTriangle, Store } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
-import { useUserCredits } from "@/app/_context/UserCreditsContext";
-import { useZenMode } from "@/app/provider";
+import { useApp } from "@/app/_context/AppContext";
 
-function SideBar() {
+function SideBar({ closeSidebar }) {
   const MenuList = [
     {
       name: "Dashboard",
@@ -31,83 +29,217 @@ function SideBar() {
     },
   ];
 
-  const { totalCourse } = useContext(CourseCountContext);
-  const { zenMode } = useZenMode();
+  const {
+    totalCourses: totalCourse,
+    credits,
+    isMember,
+    loading: creditsLoading,
+    zenMode,
+  } = useApp();
   const path = usePathname();
   const router = useRouter();
   const { user } = useUser();
-  const { credits, isMember, loading: creditsLoading } = useUserCredits();
-  
+
   // Handle click on "Create New" when user has no credits
   const handleCreateNew = async (e) => {
     if (!isMember && credits <= 0) {
       e.preventDefault();
-      toast.error("You have no credits left. Please upgrade to continue creating materials.", {
-        action: {
-          label: "Upgrade",
-          onClick: () => router.push("/dashboard/upgrade"),
-        },
-      });
+      toast.error(
+        "You have no credits left. Please upgrade to continue creating materials.",
+        {
+          action: {
+            label: "Upgrade",
+            onClick: () => router.push("/dashboard/upgrade"),
+          },
+        }
+      );
       return false;
     }
   };
 
   return (
-    <div className={`h-screen shadow-md p-5 ${zenMode ? 'bg-gray-50' : ''}`}>
-      <div className="flex gap-2 items-center">
-        <Image src={"/logo.svg"} alt="logo" width={40} height={40} />
-        <h2 className="font-bold text-2xl">
-          <Link href="/dashboard">Studdy Buddy</Link>
-        </h2>
+    <div
+      className={`h-screen shadow-sm p-5 bg-background/95 backdrop-blur-sm border-r border-border relative overflow-y-auto transition-colors duration-200 ${
+        zenMode ? "dark:bg-gray-900/95" : ""
+      }`}
+      aria-label="Sidebar navigation"
+    >
+      <div className="flex gap-2 items-center justify-between">
+        <div className="flex gap-2 items-center">
+          <Image
+            src={"/logo.svg"}
+            alt=""
+            width={40}
+            height={40}
+            className="flex-shrink-0"
+            aria-hidden="true"
+          />
+          <h2 className="font-bold text-2xl text-foreground">
+            <Link
+              href="/dashboard"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <span className="sr-only">Studdy Buddy</span>
+              <span aria-hidden="true">Studdy Buddy</span>
+            </Link>
+          </h2>
+        </div>
+        {closeSidebar && (
+          <button
+            className="p-1.5 rounded-md hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 transition-colors md:hidden"
+            onClick={closeSidebar}
+            aria-label="Close sidebar"
+          >
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-x"
+            >
+              <title>Close menu</title>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
 
-      <div className="mt-10">
-        <Link href={"/create"} className="w-full" onClick={handleCreateNew}>
-          <Button className="w-full">+&nbsp;Create New</Button>
-        </Link>
-        <div className="mt-5">
-          {MenuList.map((menu, index) => (
-            <div
-              key={index}
-              className={`flex gap-5 items-center p-3 hover:bg-slate-200 rounded-lg cursor-pointer mt-3 ${
-                path === menu.path && "bg-slate-200"
-              }`}
-            >
-              <menu.icon />
-              <Link href={menu.path}>{menu.name}</Link>
-            </div>
-          ))}
+      <nav className="mt-10" aria-label="Main navigation">
+        <div className="space-y-1">
+          <Link
+            href={"/create"}
+            className="w-full block"
+            onClick={handleCreateNew}
+            aria-label="Create new course"
+          >
+            <Button className="w-full h-10 text-sm font-medium">
+              <span className="mr-1">+</span> Create New
+            </Button>
+          </Link>
+
+          <ul className="space-y-1 mt-6">
+            {MenuList.map((menu) => {
+              const isActive = path === menu.path;
+              const Icon = menu.icon;
+
+              return (
+                <li key={`menu-${menu.path.toLowerCase().replace("/", "")}`}>
+                  <Link
+                    href={menu.path}
+                    className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors text-sm font-medium
+                      ${
+                        isActive
+                          ? "bg-accent text-accent-foreground"
+                          : "text-foreground/80 hover:bg-accent/50 hover:text-foreground"
+                      }
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    <Icon
+                      className="h-5 w-5 flex-shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>{menu.name}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-      </div>
-      
+      </nav>
+
       {!creditsLoading && (
-        <div className="border p-3 bg-slate-100 rounded-lg absolute bottom-10 w-[86%]">
+        <div className="border border-border p-4 bg-card/80 backdrop-blur-sm rounded-lg mt-auto mb-6 text-card-foreground shadow-sm">
           {isMember ? (
             // Premium member display
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Shield className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-medium text-blue-600">Premium Plan</h2>
+                <Shield className="h-5 w-5 text-primary" aria-hidden="true" />
+                <h2 className="text-base font-medium text-primary">
+                  Premium Plan
+                </h2>
               </div>
-              <p className="text-sm mb-2">Unlimited access to all features</p>
-              <Link href="/dashboard/upgrade" className="text-primary text-sm block mt-2">
+              <p className="text-sm text-muted-foreground mb-3">
+                Unlimited access to all features
+              </p>
+              <Link
+                href="/dashboard/upgrade"
+                className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                aria-label="Manage your premium subscription"
+              >
                 Manage subscription
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="ml-1 h-3.5 w-3.5"
+                  aria-hidden="true"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
               </Link>
             </div>
           ) : (
             // Free plan user display
             <div>
-              <h2 className="text-lg mb-3">Available Credits: {credits}</h2>
-              <Progress value={(credits < 0 ? 0 : credits) / 2 * 100} />
-              <h2 className="text-xs mt-1">{2 - credits} out of 2 Credits used</h2>
+              <h3 className="text-sm font-medium text-foreground mb-2">
+                Available Credits
+              </h3>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-2xl font-bold">{credits}</span>
+                <span className="text-xs text-muted-foreground">
+                  {Math.max(0, 2 - credits)} of 2 remaining
+                </span>
+              </div>
+              <Progress
+                value={(Math.max(0, credits) / 2) * 100}
+                className="h-2 bg-muted"
+                aria-label={`${credits} out of 2 credits used`}
+              />
+
               {credits <= 0 && (
-                <div className="flex items-center gap-1 mt-2 text-amber-600">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span className="text-xs">No credits left</span>
+                <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-md flex items-start gap-2">
+                  <AlertTriangle
+                    className="h-4 w-4 mt-0.5 text-amber-500 dark:text-amber-400 flex-shrink-0"
+                    aria-hidden="true"
+                  />
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    You've used all your credits. Upgrade for unlimited access.
+                  </p>
                 </div>
               )}
-              <Link href="/dashboard/upgrade" className="text-primary text-sm block mt-2">
-                Upgrade to create more
+
+              <Link
+                href="/dashboard/upgrade"
+                className="mt-3 inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                aria-label="Upgrade to premium"
+              >
+                Upgrade for more
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="ml-1 h-3.5 w-3.5"
+                  aria-hidden="true"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
               </Link>
             </div>
           )}

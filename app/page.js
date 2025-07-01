@@ -1,13 +1,15 @@
 "use client"
 
 import React from "react";
-import { ArrowRight, BookOpen, Brain, FileText, Sparkles, Github, Menu, X } from "lucide-react";
+import { ArrowRight, BookOpen, Brain, FileText, Sparkles, Github, Menu, X, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button"
-
+import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 
 const LandingPage = () => {
+  const { isSignedIn } = useUser();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -42,11 +44,31 @@ const LandingPage = () => {
                 <Github className="h-4 w-4 mr-2" />
                 <span>GitHub</span>
               </a>
-              <Link href="/dashboard">
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
-                  Dashboard
-                </button>
-              </Link>
+              {!isSignedIn ? (
+                <div className="flex space-x-3">
+                  <SignInButton mode="modal" forceRedirectUrl="/dashboard">
+                    <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Log In
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal" forceRedirectUrl="/dashboard" >
+                    <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Sign Up
+                    </button>
+                  </SignUpButton>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <Link href="/dashboard">
+                    <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
+                      Dashboard
+                    </button>
+                  </Link>
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              )}
             </div>
             <div className="-mr-2 flex items-center sm:hidden">
               <button type="button" className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500" aria-expanded="false" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -273,7 +295,7 @@ const LandingPage = () => {
         </section>
 
         {/* Testimonials Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">

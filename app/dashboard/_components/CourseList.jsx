@@ -6,6 +6,7 @@ import CourseCardItem from "./CourseCardItem";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useApp } from "@/app/_context/AppContext";
+import Link from "next/link";
 
 function CourseList() {
   const { user, isLoaded } = useUser();

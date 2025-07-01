@@ -51,8 +51,8 @@ function AppProvider({ children }) {
     }
   }, []);
 
-  // Memoized fetch user credits function
-  const fetchUserCredits = useCallback(async () => {
+  // Memoized unified user data fetch function
+  const fetchUserData = useCallback(async () => {
     if (!user || !isUserLoaded) return;
     
     setLoading(true);
@@ -60,18 +60,20 @@ function AppProvider({ children }) {
     
     try {
       const email = user.primaryEmailAddress?.emailAddress;
+      const userName = user.username || user.fullName || user.firstName || "";
       
       if (!email) {
         setError("User email not found");
         return;
       }
       
-      const response = await axios.get(`/api/credits?email=${email}`);
-      setCredits(response.data.credits);
-      setIsMember(response.data.isMember);
+      const response = await axios.post('/api/user/init', { email, userName });
+      const { credits: userCredits, isMember: memberStatus } = response.data.user;
+      setCredits(userCredits);
+      setIsMember(memberStatus);
     } catch (err) {
-      console.error("Error fetching user credits:", err);
-      setError("Failed to load user credits");
+      console.error("Error fetching user data:", err);
+      setError("Failed to load user data");
     } finally {
       setLoading(false);
     }
@@ -109,12 +111,12 @@ function AppProvider({ children }) {
     });
   }, []);
 
-  // Fetch credits when user changes
+  // Fetch user data when user changes
   useEffect(() => {
     if (isUserLoaded) {
-      fetchUserCredits();
+      fetchUserData();
     }
-  }, [isUserLoaded, fetchUserCredits]);
+  }, [isUserLoaded, fetchUserData]);
 
   // Memoized context value to prevent unnecessary re-renders
   const value = useMemo(() => ({
@@ -124,7 +126,7 @@ function AppProvider({ children }) {
     error,
     totalCourses,
     zenMode,
-    refreshCredits: fetchUserCredits,
+    refreshUser: fetchUserData,
     decrementCredits,
     toggleZenMode,
     setTotalCourses: setTotalCoursesState,
@@ -135,7 +137,7 @@ function AppProvider({ children }) {
     error, 
     totalCourses, 
     zenMode, 
-    fetchUserCredits, 
+    fetchUserData, 
     decrementCredits, 
     toggleZenMode
   ]);  

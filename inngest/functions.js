@@ -4,7 +4,6 @@ import {
   CHAPTER_NOTES_TABLE,
   STUDY_MATERIAL_TABLE,
   STUDY_TYPE_CONTENT_TABLE,
-  USER_TABLE,
 } from "@/configs/schema";
 import { eq } from "drizzle-orm";
 import {
@@ -14,53 +13,6 @@ import {
   GenerateStudyTypeContentAiModel,
 } from "@/configs/AiModel";
 
-export const CreateNewUser = inngest.createFunction(
-  { id: "create-user" },
-  { event: "user.create" },
-  async ({ event, step }) => {
-    const { user } = event.data;
-
-    const result = await step.run(
-      "CheckUser And create new if not in DB",
-      async () => {
-        try {
-          // Check if the user already exists
-          const existingUser = await db
-            .select()
-            .from(USER_TABLE)
-            .where(
-              eq(USER_TABLE.email, user?.email)
-            );
-
-          if (existingUser?.length === 0) {
-            // If not, then add to db with proper field names
-            console.log("Creating new user in DB:", user);
-            const userResp = await db
-              .insert(USER_TABLE)
-              .values({
-                userName: user?.userName || "", // Match the schema column name
-                email: user?.email || "",
-                isMember: false,
-                customerId: null,
-              })
-              .returning({ id: USER_TABLE.id });
-
-            console.log("New user created:", userResp);
-            return userResp;
-          }
-
-          console.log("Existing user found:", existingUser);
-          return existingUser;
-        } catch (error) {
-          console.error("Error in CreateNewUser:", error);
-          throw error; // Re-throw to let Inngest handle the error
-        }
-      }
-    );
-
-    return { status: "Success", userId: result[0]?.id };
-  }
-);
 
 export const GenerateNotes = inngest.createFunction(
   { id: "generate-course" },

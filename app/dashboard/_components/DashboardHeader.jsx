@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useTheme } from "next-themes";
 import { useApp } from "@/app/_context/AppContext";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 // Memoized header controls to prevent unnecessary re-renders
 const HeaderControls = memo(({ 
@@ -202,7 +203,7 @@ function DashboardHeader({ onBurgerClick, className, ...props }) {
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
       
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 justify-end w-full sm:gap-3">
         {/* Credits indicator */}
         {!creditsLoading && (
           <TooltipProvider>
@@ -210,46 +211,65 @@ function DashboardHeader({ onBurgerClick, className, ...props }) {
               <TooltipTrigger asChild>
                 <div 
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5",
+                    "px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2",
                     "transition-all duration-200 hover:scale-[1.02] active:scale-95",
-                    "border border-transparent hover:border-border/50",
+                    "border dark:border-transparent hover:border-border/50",
                     isMember 
-                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200" 
-                      : "bg-muted text-foreground"
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-100 border-blue-200 dark:border-blue-800/50" 
+                      : "bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-100 border-amber-200 dark:border-amber-800/50"
                   )}
                   aria-label={isMember ? 'Premium membership active' : `You have ${credits} credits remaining`}
                 >
-                  <Zap className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
-                  <span className="whitespace-nowrap font-medium">
-                    {isMember ? (
-                      <span className="flex items-center gap-1">
-                        <Sparkles className="h-3.5 w-3.5 text-yellow-500" />
-                        Premium
+                  {isMember ? (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5 text-yellow-500 dark:text-yellow-400" />
+                      <span className="whitespace-nowrap font-medium">Premium</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                      <span className="whitespace-nowrap font-medium">
+                        {credits} {credits === 1 ? 'Credit' : 'Credits'}
                       </span>
-                    ) : (
-                      `${credits} ${credits === 1 ? 'Credit' : 'Credits'}`
-                    )}
-                  </span>
+                    </>
+                  )}
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-sm max-w-[280px] p-3">
-                <div className="space-y-1">
-                  <h4 className="font-semibold">
-                    {isMember ? '🎉 Premium Member' : 'Credits'}
-                  </h4>
-                  <p className="text-muted-foreground text-sm">
-                    {isMember 
-                      ? 'You have unlimited access with your premium membership!'
-                      : `You have ${credits} ${credits === 1 ? 'credit' : 'credits'} remaining.`}
-                  </p>
+              <TooltipContent side="bottom" className="text-sm max-w-[280px] p-0 overflow-hidden border-border/50 dark:border-border/80 shadow-lg">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg ${
+                      isMember 
+                        ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200'
+                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200'
+                    }`}>
+                      {isMember ? (
+                        <Sparkles className="h-4 w-4" />
+                      ) : (
+                        <Zap className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-semibold text-foreground">
+                        {isMember ? 'Premium Member 🎉' : `Credits Remaining: ${credits}`}
+                      </h4>
+                      
+                    </div>
+                  </div>
                   {!isMember && (
-                    <Button 
-                      size="sm" 
-                      className="mt-2 w-full text-xs"
-                      onClick={() => window.location.href = '/dashboard/upgrade'}
+                    <Link 
+                      href="/dashboard/upgrade"
+                      className="block w-full"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      Upgrade to Premium
-                    </Button>
+                      <Button 
+                        size="sm" 
+                        className="w-full text-xs bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white dark:from-blue-500 dark:to-blue-600 dark:hover:from-blue-600 dark:hover:to-blue-700 transition-all duration-200 shadow-sm"
+                      >
+                        <Zap className="h-3.5 w-3.5 mr-1.5" />
+                        Upgrade to Premium
+                      </Button>
+                    </Link>
                   )}
                 </div>
               </TooltipContent>

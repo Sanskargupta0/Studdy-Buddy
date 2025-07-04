@@ -142,50 +142,51 @@ function SideBar({ closeSidebar }) {
 
   // Memoize the create button
   const createButton = useMemo(() => (
-    <Link
-      href={"/create"}
-      className="w-full block"
-      onClick={handleCreateNew}
-      aria-label="Create new course"
-    >
-      <Button className="w-full h-10 text-sm font-medium">
-        <span className="mr-1">+</span> Create New
-      </Button>
-    </Link>
+    <div className="mb-4">
+      <Link
+        href={"/create"}
+        className="w-full block"
+        onClick={handleCreateNew}
+        aria-label="Create new course"
+      >
+        <Button className="w-full h-10 text-sm font-medium">
+          <span className="mr-1">+</span> Create New
+        </Button>
+      </Link>
+    </div>
   ), [handleCreateNew]);
 
   // Memoize the menu items
-  const renderedMenuItems = useMemo(() => (
-    <ul className="space-y-1 mt-6">
-      {menuItems.map((menu) => (
-        <MenuItem 
-          key={menu.path}
-          menu={menu}
-          isActive={path === menu.path}
-          onClick={closeSidebar}
-        />
-      ))}
-    </ul>
-  ), [menuItems, path, closeSidebar]);
+
 
   return (
     <div
-      className={`h-screen shadow-sm p-5 bg-background/95 backdrop-blur-sm border-r border-border relative overflow-y-auto transition-colors duration-200 ${
+      className={`h-screen flex flex-col shadow-sm bg-background/95 backdrop-blur-sm border-r border-border overflow-hidden transition-colors duration-200 ${
         zenMode ? "dark:bg-gray-900/95" : ""
       }`}
       aria-label="Sidebar navigation"
     >
-      {logoAndHeader}
+      <div className="p-5 pb-4">
+        {logoAndHeader}
+        <nav className="mt-8" aria-label="Main navigation">
+          <ul className="space-y-2">
+            {menuItems.map((menu) => (
+              <MenuItem 
+                key={menu.path}
+                menu={menu}
+                isActive={path === menu.path}
+                onClick={closeSidebar}
+              />
+            ))}
+          </ul>
+        </nav>
+      </div>
 
-      <nav className="mt-10" aria-label="Main navigation">
-        <div className="space-y-1">
-          {createButton}
-          {renderedMenuItems}
-        </div>
-      </nav>
+      <div className="p-5 pt-0 mt-auto">
 
-      {/* Memoize the subscription status component */}
-      {!creditsLoading && (
+        {createButton}
+        
+        {!creditsLoading && (
         <div className="border border-border p-4 bg-card/80 backdrop-blur-sm rounded-lg mt-auto mb-6 text-card-foreground shadow-sm">
           {isMember ? (
             // Premium member display
@@ -279,6 +280,7 @@ function SideBar({ closeSidebar }) {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

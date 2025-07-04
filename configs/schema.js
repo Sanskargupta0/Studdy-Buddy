@@ -16,6 +16,7 @@ export const USER_TABLE = pgTable("users", {
   isMember: boolean().default(false),
   customerId: varchar(),
   credits: integer().default(2),
+  planType: varchar().default("free"),
 });
 
 export const STUDY_MATERIAL_TABLE = pgTable("studyMaterial", {

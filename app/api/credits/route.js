@@ -3,41 +3,6 @@ import { USER_TABLE } from "@/configs/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-// Check user credits
-export async function GET(req) {
-  try {
-    const searchParams = new URL(req.url).searchParams;
-    const email = searchParams.get('email');
-    
-    if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
-    }
-    
-    const user = await db
-      .select({
-        id: USER_TABLE.id,
-        isMember: USER_TABLE.isMember,
-        credits: USER_TABLE.credits
-      })
-      .from(USER_TABLE)
-      .where(eq(USER_TABLE.email, email));
-      
-    if (user.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-    
-    return NextResponse.json({ 
-      credits: user[0].credits,
-      isMember: user[0].isMember
-    });
-  } catch (error) {
-    console.error("Error fetching credits:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch credits" }, 
-      { status: 500 }
-    );
-  }
-}
 
 // Use a credit
 export async function POST(req) {

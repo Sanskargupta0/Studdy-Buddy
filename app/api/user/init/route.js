@@ -11,7 +11,7 @@ import { NextResponse } from "next/server";
  */
 export async function POST(req) {
   try {
-    const { email, userName } = await req.json();
+    const { email, userName, customerID } = await req.json();
 
     if (!email || !userName) {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function POST(req) {
     let user = await db
       .select()
       .from(USER_TABLE)
-      .where(eq(USER_TABLE.email, email));
+      .where(eq(USER_TABLE.email, email, customerID));
 
     // If the user does not exist, create one with defaults
     if (user.length === 0) {

@@ -61,13 +61,14 @@ function AppProvider({ children }) {
     try {
       const email = user.primaryEmailAddress?.emailAddress;
       const userName = user.username || user.fullName || user.firstName || "";
+      const customerID = user.customerId;
       
       if (!email) {
         setError("User email not found");
         return;
       }
       
-      const response = await axios.post('/api/user/init', { email, userName });
+      const response = await axios.post('/api/user/init', { email, userName, customerID });
       const { credits: userCredits, isMember: memberStatus } = response.data.user;
       setCredits(userCredits);
       setIsMember(memberStatus);

@@ -28,7 +28,7 @@ export async function POST(req) {
     // the actual Session ID is returned in the query parameter when your customer
     // is redirected to the success page.
     success_url:
-      process.env.HOST_URL + "payment-success?session_id={CHECKOUT_SESSION_ID}",
+      process.env.HOST_URL + "dashboard/upgrade/success?session_id={CHECKOUT_SESSION_ID}",
     cancel_url: process.env.HOST_URL + "dashboard/upgrade",
   });
 

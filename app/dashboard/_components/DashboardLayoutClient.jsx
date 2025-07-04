@@ -109,7 +109,7 @@ function DashboardLayoutClient({ children }) {
         aria-hidden={!sidebarOpen}
       >
         <div 
-          className={`fixed left-0 top-0 h-full w-72 bg-background/95 backdrop-blur-sm shadow-xl border-r border-border transition-all duration-300 ease-in-out transform ${
+          className={`fixed left-0 top-0 h-full w-64 bg-background/95 backdrop-blur-sm shadow-xl border-r border-border transition-all duration-300 ease-in-out transform ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
           onClick={e => e.stopPropagation()}

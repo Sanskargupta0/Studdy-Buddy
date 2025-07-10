@@ -41,7 +41,6 @@ function Quiz() {
         setCorrectAnswer(questions[0]?.answer);
       }
 
-      console.log("Quiz", result.data);
     } catch (error) {
       console.error("Error fetching quiz data:", error);
       toast.error("Failed to fetch quiz data. Please try again later.");

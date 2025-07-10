@@ -66,7 +66,7 @@ function DashboardLayoutClient({ children }) {
 
   useEffect(() => {
     if (isLoaded && !user) {
-      router.push("/sign-in");
+      router.push("/");
     }
   }, [isLoaded, user, router]);
 

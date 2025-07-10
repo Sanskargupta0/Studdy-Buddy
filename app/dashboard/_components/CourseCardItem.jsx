@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
+import { Dialog } from "@/components/ui/dialog";
+import axios from "axios";
 
-function CourseCardItem({ course }) {
+function CourseCardItem({ course, onDelete, userEmail, onRequestDelete }) {
   const statusColors = {
     'Completed': {
       bg: 'bg-green-100 dark:bg-green-900/30',
@@ -39,6 +41,8 @@ function CourseCardItem({ course }) {
   const title = course?.courseLayout?.courseTitle || 'Untitled Course';
   const description = course?.courseLayout?.courseSummary || 'No description available';
   const isGenerating = status === 'Generating';
+
+  // Remove dialog state and handleDelete from here
 
   return (
     <article 
@@ -105,7 +109,16 @@ function CourseCardItem({ course }) {
           />
         </div>
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex justify-end gap-2">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => onRequestDelete(course)}
+            aria-label={`Delete course: ${title}`}
+            disabled={isGenerating}
+          >
+            Delete
+          </Button>
           {isGenerating ? (
             <Button 
               disabled 
@@ -130,7 +143,9 @@ function CourseCardItem({ course }) {
             </Link>
           )}
         </div>
-      </div>
+      </div> {/* Close the p-5 flex-1 flex flex-col div */}
+
+      {/* Remove Dialog */}
     </article>
   );
 }

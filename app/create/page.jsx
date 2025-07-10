@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SelectOption from "./_components/SelectOption";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import TopicInput from "./_components/TopicInput";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
@@ -13,8 +14,18 @@ import DashboardLayoutClient from "../dashboard/_components/DashboardLayoutClien
 function CreateCourse() {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({});
-  const { user } = useUser();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const [loading, setLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
+  useEffect(() => {
+    if (isUserLoaded) {
+      const timer = setTimeout(() => {
+        setIsPageLoading(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isUserLoaded]);
 
   const router = useRouter();
   const handleUserInput = (fieldName, fieldValue) => {
@@ -22,24 +33,58 @@ function CreateCourse() {
       ...prev,
       [fieldName]: fieldValue,
     }));
-    console.log(formData);
   };
 
   const GenerateCourseOutline = async () => {
+    if (!user) {
+      toast.error("Please sign in to create a course");
+      return;
+    }
+    
     const courseId = uuidv4();
     setLoading(true);
-    const result = await axios.post("/api/generate-course-outline", {
-      courseId: courseId,
-      ...formData,
-      createdBy: user?.primaryEmailAddress?.emailAddress,
-    });
-    toast.success("Pls wait your course is generating!");
-    setLoading(false);
-    router.replace("/dashboard");
-    //toast Notification
-    toast("Your course content is generating, Click on Refresh Button");
-    console.log(result);
+    try {
+      const result = await axios.post("/api/generate-course-outline", {
+        courseId: courseId,
+        ...formData,
+        createdBy: user?.primaryEmailAddress?.emailAddress,
+      });
+      toast.success("Please wait while we generate your course!");
+      router.replace("/dashboard");
+      toast("Your course content is being generated.");
+    } catch (error) {
+      console.error("Error generating course outline:", error);
+      toast.error("Failed to generate course. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (isPageLoading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
+        <div className="text-center mb-10">
+          <Skeleton className="h-10 w-3/4 mx-auto mb-4" />
+          <Skeleton className="h-6 w-1/2 mx-auto" />
+        </div>
+        <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+          <div className="flex items-center justify-center mb-8">
+            <Skeleton className="h-8 w-8 rounded-full mr-4" />
+            <Skeleton className="h-1 w-16 mx-2" />
+            <Skeleton className="h-8 w-8 rounded-full ml-4" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+          <div className="flex justify-end mt-8 pt-4 border-t border-border">
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">

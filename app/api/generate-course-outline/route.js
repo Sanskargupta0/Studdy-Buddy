@@ -74,8 +74,6 @@ export async function POST(req) {
       })
       .returning({ resp: STUDY_MATERIAL_TABLE });
 
-    console.log("Course created:", dbResult[0].resp);
-
     //Trigger Inngest function to generate chapter notes
     const result = await inngest.send({
       name: "notes.generate",
@@ -83,8 +81,6 @@ export async function POST(req) {
         course: dbResult[0].resp,
       },
     });
-
-    console.log("Inngest function triggered:", result);
 
     // Return the remaining credits for the user
     const updatedUser = await db

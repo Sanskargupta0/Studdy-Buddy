@@ -27,8 +27,6 @@ function ViewNotes() {
         ...note,
         notes: note.notes, // Directly use the HTML string.
       }));
-
-      console.log("Parsed Notes:", parsedNotes); // Debug log
       setNotes(parsedNotes || []);
     } catch (error) {
       console.error("Failed to fetch notes:", error);

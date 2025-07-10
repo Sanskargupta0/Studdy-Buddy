@@ -7,18 +7,37 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useApp } from "@/app/_context/AppContext";
 import Link from "next/link";
+import { Dialog } from "@/components/ui/dialog";
 
 function CourseList() {
   const { user, isLoaded } = useUser();
   const [courseList, setCourseList] = useState([]);
   const [loading, setLoading] = useState(true);
   const { setTotalCourses } = useApp();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (isLoaded && user) {
       GetCourseList();
     }
   }, [isLoaded, user]);
+
+  // Auto-refresh if any course is generating
+  useEffect(() => {
+    if (loading) return; // Don't set interval while loading
+    const anyGenerating = courseList.some(c => c.status === 'Generating');
+    let intervalId;
+    if (anyGenerating) {
+      intervalId = setInterval(() => {
+        GetCourseList();
+      }, 10000); // 10 seconds
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [courseList, loading]);
 
   const GetCourseList = async () => {
     if (!user?.primaryEmailAddress?.emailAddress) return;
@@ -34,6 +53,26 @@ function CourseList() {
       console.error("Error fetching course list:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRequestDelete = (course) => {
+    setSelectedCourse(course);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedCourse) return;
+    setDeleting(true);
+    try {
+      await axios.post("/api/courses/delete", { courseId: selectedCourse.courseId, email: user.primaryEmailAddress.emailAddress });
+      setDeleteDialogOpen(false);
+      setSelectedCourse(null);
+      GetCourseList();
+    } catch (err) {
+      alert("Failed to delete course. Please try again.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -157,6 +196,9 @@ function CourseList() {
               >
                 <CourseCardItem 
                   course={course}
+                  onDelete={GetCourseList}
+                  userEmail={user.primaryEmailAddress.emailAddress}
+                  onRequestDelete={handleRequestDelete}
                 />
               </div>
             ))
@@ -171,6 +213,25 @@ function CourseList() {
           </p>
         </div>
       )}
+      {/* Render the delete dialog at the root level, outside the grid */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <Dialog.Content onClose={() => setDeleteDialogOpen(false)}>
+          <Dialog.Title icon={<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}>
+            Delete Course
+          </Dialog.Title>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Are you sure you want to delete <span className="font-semibold">{selectedCourse?.courseLayout?.courseTitle || 'this course'}</span>? This will permanently remove all notes, flashcards, quizzes, and recommendations for this course. This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

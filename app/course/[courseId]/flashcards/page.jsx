@@ -41,7 +41,6 @@ function Flashcards() {
         studyType: "Flashcard",
       });
       setFlashCards(result?.data);
-      console.log("Flashcard", result.data);
     } catch (error) {
       console.error("Error fetching flashcards:", error);
     } finally {

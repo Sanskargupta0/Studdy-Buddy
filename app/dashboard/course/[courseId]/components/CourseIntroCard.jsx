@@ -67,13 +67,6 @@ function CourseIntroCard({ course }) {
             {course?.courseLayout?.courseSummary || 'No description available'}
           </p>
           
-          <div className="mt-4 space-y-2">
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Course Progress</span>
-              <span>0%</span>
-            </div>
-            <Progress value={0} className="h-2" />
-          </div>
 
           <div className="mt-4 flex items-center gap-2 text-muted-foreground text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">

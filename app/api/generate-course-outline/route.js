@@ -40,15 +40,6 @@ export async function POST(req) {
       );
     }
 
-    // If not a member, use a credit
-    if (!currentUser.isMember) {
-      await db
-        .update(USER_TABLE)
-        .set({
-          credits: currentUser.credits - 1
-        })
-        .where(eq(USER_TABLE.email, createdBy));
-    }
 
     const PROMPT = `
         generate a study material for '${topic}' for '${courseType}' 
@@ -60,6 +51,16 @@ export async function POST(req) {
     // Generate course layout using AI
     const aiResp = await courseOutlineAIModel.sendMessage(PROMPT);
     const aiResult = JSON.parse(aiResp.response.text());
+
+     // If not a member, use a credit
+    if (!currentUser.isMember) {
+      await db
+        .update(USER_TABLE)
+        .set({
+          credits: currentUser.credits - 1
+        })
+        .where(eq(USER_TABLE.email, createdBy));
+    }
 
     // Save result along with user input
     const dbResult = await db

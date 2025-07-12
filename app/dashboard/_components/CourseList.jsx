@@ -111,11 +111,6 @@ function CourseList() {
             ) : (
               <>
                 {courseList.length} {courseList.length === 1 ? 'course' : 'courses'} in total
-                {courseList.length > 0 && (
-                  <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 bg-muted rounded-full">
-                    {courseList.filter(c => c.status === 'Completed').length} completed
-                  </span>
-                )}
               </>
             )}
           </p>
@@ -166,7 +161,7 @@ function CourseList() {
             Get started by creating your first course. We'll help you organize your learning materials.
           </p>
           <Button className="mt-4" asChild>
-            <Link href="/create">
+            <Link href="/dashboard/create">
               Create your first course
             </Link>
           </Button>
@@ -190,7 +185,7 @@ function CourseList() {
           ) : (
             courseList?.map((course, index) => (
               <div 
-                key={`course-${course.id || index}-${course.title?.substring(0, 10) || 'untitled'}`}
+                key={index}
                 className="transition-all duration-200 hover:scale-[1.02] focus-within:ring-2 focus-within:ring-primary/30 focus-within:ring-offset-2 rounded-xl focus-within:outline-none"
                 tabIndex="0"
               >

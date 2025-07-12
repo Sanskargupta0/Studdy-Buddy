@@ -140,6 +140,15 @@ export async function POST(req) {
     // Take top 5 results
     const topResults = sortedResults.slice(0, 5);
 
+    //check if any data is already present in the database
+    const existingData = await db
+      .select()
+      .from(YOUTUBE_RECOMMENDATIONS_TABLE)
+      .where(eq(YOUTUBE_RECOMMENDATIONS_TABLE.courseId, courseId));
+    if (existingData.length > 0) {
+      return NextResponse.json({ recommendations: existingData });
+    }
+    else{
     // Store in database
     const insertPromises = topResults.map((result) => 
       db.insert(YOUTUBE_RECOMMENDATIONS_TABLE).values({
@@ -156,6 +165,7 @@ export async function POST(req) {
     await Promise.all(insertPromises);
 
     return NextResponse.json({ recommendations: topResults });
+  }
   } catch (error) {
     console.error("Error generating YouTube recommendations:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

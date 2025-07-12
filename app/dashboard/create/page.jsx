@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import DashboardLayoutClient from "../dashboard/_components/DashboardLayoutClient";
+import { useApp } from "@/app/_context/AppContext";
 
 function CreateCourse() {
   const [step, setStep] = useState(0);
@@ -17,6 +17,7 @@ function CreateCourse() {
   const { user, isLoaded: isUserLoaded } = useUser();
   const [loading, setLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const { decrementCredits } = useApp();
 
   useEffect(() => {
     if (isUserLoaded) {
@@ -49,12 +50,12 @@ function CreateCourse() {
         ...formData,
         createdBy: user?.primaryEmailAddress?.emailAddress,
       });
-      toast.success("Please wait while we generate your course!");
+      toast.success("Please wait while we generate your course!")
+      decrementCredits();
+      setFormData({})
       router.replace("/dashboard");
-      toast("Your course content is being generated.");
     } catch (error) {
-      console.error("Error generating course outline:", error);
-      toast.error("Failed to generate course. Please try again.");
+      toast.error("Failed to generate course. ");
     } finally {
       setLoading(false);
     }
@@ -170,9 +171,5 @@ function CreateCourse() {
 }
 
 export default function CreatePage() {
-  return (
-    <DashboardLayoutClient>
-      <CreateCourse />
-    </DashboardLayoutClient>
-  );
-}
+  return <CreateCourse />;
+};

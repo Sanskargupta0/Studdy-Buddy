@@ -32,22 +32,27 @@ const MaterialCardItem = ({ item, studyTypeContent, course, refreshData }) => {
       course?.courseLayout?.chapters.forEach((chapter) => {
         chapters = chapter?.chapterTitle + "," + chapters;
       });
-
+      toast("Content generation started.");
       const result = await axios.post("/api/study-type-content", {
         courseId: course?.courseId,
         type: item.type,
         chapters: chapters,
       });
-
-      refreshData(true);
-      toast("Content generation started. Pls refresh after some time.");
+      if (result?.data?.message) {
+        setTimeout(() => {
+          setLoading(false);
+          toast.success("Content generated successfully.");
+          refreshData(); // Refresh data after generation
+        }, 20000);
+      } else {
+        toast.error("Failed to generate content.");
+      }
     } catch (error) {
       console.error("Generation error:", error);
       toast(
         "Error generating content: " +
           (error.response?.data?.message || error.message)
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -56,7 +61,7 @@ const MaterialCardItem = ({ item, studyTypeContent, course, refreshData }) => {
 
   return (
     <div className="h-full">
-      <Link href={"/course/" + course?.courseId + item.path} className="block h-full">
+      <Link href={"/dashboard/course/" + course?.courseId + item.path} className="block h-full">
         <div
           className={`h-full flex flex-col border border-border bg-card rounded-xl p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${
             !contentReady ? 'opacity-80 hover:opacity-100' : 'hover:shadow-primary/10'
@@ -106,7 +111,7 @@ const MaterialCardItem = ({ item, studyTypeContent, course, refreshData }) => {
                   e.stopPropagation();
                   GenerateContent(e);
                 }}
-                disabled={loading}
+                disabled={loading || studyTypeContent? false:true}
               >
                 {loading ? (
                   <>

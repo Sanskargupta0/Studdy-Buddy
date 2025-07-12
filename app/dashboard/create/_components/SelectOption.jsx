@@ -18,11 +18,7 @@ function SelectOption({ selectedStudyType }) {
     {
       name: "Coding Prep",
       icon: "/code.png",
-    },
-    {
-      name: "Other",
-      icon: "/knowledge.png",
-    },
+    }
   ];
   const [selectedOption, setSelectedOption] = useState();
   return (
@@ -30,7 +26,7 @@ function SelectOption({ selectedStudyType }) {
       <h2 className="text-center text-lg font-medium text-foreground mb-6">
         What's the purpose of your study material?
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {Options.map((option) => {
           const optionKey = option.name.toLowerCase().replace(/\s+/g, '-');
           const isSelected = option.name === selectedOption;

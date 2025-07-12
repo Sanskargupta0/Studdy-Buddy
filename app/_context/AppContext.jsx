@@ -87,7 +87,7 @@ function AppProvider({ children }) {
     try {
       const email = user.primaryEmailAddress?.emailAddress;
       const response = await axios.post("/api/credits", { email });
-      
+  
       setCredits(response.data.remainingCredits);
       setIsMember(response.data.isMember);
       

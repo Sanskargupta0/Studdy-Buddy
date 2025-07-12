@@ -153,9 +153,9 @@ const YouTubeRecommendations = ({ courseId, course }) => {
       </div>
       
       <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-        {recommendations.map((video) => (
+        {recommendations.map((video, index) => (
           <div
-            key={video.videoId}
+            key={index}
             className="group relative flex flex-col border border-border bg-card rounded-xl overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5"
           >
             {/* Video Thumbnail */}

@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { memo, useCallback, useMemo } from "react";
-import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { useApp } from "@/app/_context/AppContext";
 
@@ -66,7 +65,6 @@ function SideBar({ closeSidebar }) {
   
   const path = usePathname();
   const router = useRouter();
-  const { user } = useUser();
 
   // Memoize the create new handler
   const handleCreateNew = useCallback(async (e) => {
@@ -84,11 +82,6 @@ function SideBar({ closeSidebar }) {
       return false;
     }
   }, [isMember, credits, router]);
-
-  // Memoize the upgrade handler
-  const handleUpgrade = useCallback(() => {
-    router.push("/dashboard/upgrade");
-  }, [router]);
 
   // Memoize the logo and header to prevent re-renders
   const logoAndHeader = useMemo(() => (
@@ -144,7 +137,7 @@ function SideBar({ closeSidebar }) {
   const createButton = useMemo(() => (
     <div className="mb-4">
       <Link
-        href={"/create"}
+        href={"/dashboard/create"}
         className="w-full block"
         onClick={handleCreateNew}
         aria-label="Create new course"
@@ -232,9 +225,6 @@ function SideBar({ closeSidebar }) {
               </h3>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-2xl font-bold">{credits}</span>
-                <span className="text-xs text-muted-foreground">
-                  {Math.max(0, 2 - credits)} of 2 remaining
-                </span>
               </div>
               <Progress
                 value={(Math.max(0, credits) / 2) * 100}

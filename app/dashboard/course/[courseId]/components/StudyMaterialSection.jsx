@@ -63,9 +63,9 @@ const StudyMaterialSection = ({ courseId, course }) => {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {MaterialList.map((item) => (
+        {MaterialList.map((item, index) => (
           <MaterialCardItem
-            key={`material-${item.type}`}
+            key={index}
             item={item}
             studyTypeContent={studyTypeContent}
             course={course}

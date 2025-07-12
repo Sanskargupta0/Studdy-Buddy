@@ -1,43 +1,27 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
-import { Dialog } from "@/components/ui/dialog";
-import axios from "axios";
+import React from "react";
 
 function CourseCardItem({ course, onDelete, userEmail, onRequestDelete }) {
   const statusColors = {
-    'Completed': {
+    'Ready': {
       bg: 'bg-green-100 dark:bg-green-900/30',
       text: 'text-green-800 dark:text-green-200',
       icon: '✓',
       label: 'Course completed'
-    },
-    'In Progress': {
-      bg: 'bg-blue-100 dark:bg-blue-900/30',
-      text: 'text-blue-800 dark:text-blue-200',
-      icon: '↻',
-      label: 'In progress'
     },
     'Generating': {
       bg: 'bg-amber-100 dark:bg-amber-900/30',
       text: 'text-amber-800 dark:text-amber-200',
       icon: '⌛',
       label: 'Generating content'
-    },
-    'Not Started': {
-      bg: 'bg-gray-100 dark:bg-gray-800/50',
-      text: 'text-gray-800 dark:text-gray-300',
-      icon: '→',
-      label: 'Not started'
     }
   };
 
-  const status = course?.status || 'Not Started';
-  const statusConfig = statusColors[status] || statusColors['Not Started'];
-  const progress = course?.progress || 0;
+  const status = course?.status || 'Generating';
+  const statusConfig = statusColors[status] || statusColors['Generating'];
   const title = course?.courseLayout?.courseTitle || 'Untitled Course';
   const description = course?.courseLayout?.courseSummary || 'No description available';
   const isGenerating = status === 'Generating';
@@ -97,19 +81,7 @@ function CourseCardItem({ course, onDelete, userEmail, onRequestDelete }) {
           {description}
         </p>
 
-        <div className="mt-6 space-y-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium text-foreground">{Math.round(progress)}%</span>
-          </div>
-          <Progress 
-            value={progress} 
-            className="h-1.5 bg-muted"
-            aria-label={`${Math.round(progress)}% complete`}
-          />
-        </div>
-
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-6 flex justify-end gap-2 items-center">
           <Button
             variant="destructive"
             size="sm"
@@ -133,12 +105,12 @@ function CourseCardItem({ course, onDelete, userEmail, onRequestDelete }) {
             </Button>
           ) : (
             <Link 
-              href={"/course/" + course?.courseId} 
+              href={"/dashboard/course/" + course?.courseId} 
               className="w-full sm:w-auto"
               aria-label={`View course: ${title}`}
             >
               <Button className="w-full sm:w-auto">
-                {progress > 0 ? 'Continue' : 'Start Learning'}
+                Start Learning
               </Button>
             </Link>
           )}

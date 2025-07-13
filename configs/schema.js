@@ -66,3 +66,17 @@ export const YOUTUBE_RECOMMENDATIONS_TABLE = pgTable("youtubeRecommendations", {
   similarityScore: integer(),
   createdAt: timestamp().defaultNow(),
 });
+
+export const FAVORITES_TABLE = pgTable("favorites", {
+  id: serial().primaryKey(),
+  userId: varchar().notNull(),
+  courseId: varchar().notNull(),
+  createdAt: timestamp().defaultNow(),
+});
+
+export const USER_UPVOTES_TABLE = pgTable("userUpvotes", {
+  id: serial().primaryKey(),
+  userId: varchar().notNull(),
+  studyMaterialId: integer().notNull(),
+  createdAt: timestamp().defaultNow(),
+});

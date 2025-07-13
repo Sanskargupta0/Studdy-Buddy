@@ -8,6 +8,15 @@ import { RefreshCw } from "lucide-react";
 import { useApp } from "@/app/_context/AppContext";
 import Link from "next/link";
 import { Dialog } from "@/components/ui/dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 function CourseList() {
   const { user, isLoaded } = useUser();
@@ -17,6 +26,10 @@ function CourseList() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [coursesPerPage] = useState(6); // 6 courses per page to match the grid layout
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -49,11 +62,76 @@ function CourseList() {
       });
       setCourseList(result.data.result || []);
       setTotalCourses(result.data.result.length);
+      
+      // Reset to first page if current page is beyond available pages
+      const totalPages = Math.ceil((result.data.result || []).length / coursesPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(1);
+      }
     } catch (error) {
       console.error("Error fetching course list:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Calculate pagination values
+  const totalCourses = courseList.length;
+  const totalPages = Math.ceil(totalCourses / coursesPerPage);
+  const startIndex = (currentPage - 1) * coursesPerPage;
+  const endIndex = startIndex + coursesPerPage;
+  const currentCourses = courseList.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // Scroll to top of course list when page changes
+    document.querySelector('[data-course-list]')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total pages is less than or equal to max visible
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show ellipsis when there are many pages
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, currentPage + 2);
+      
+      if (startPage > 1) {
+        pages.push(1);
+        if (startPage > 2) pages.push('ellipsis-start');
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pages.push('ellipsis-end');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
   };
 
   const handleRequestDelete = (course) => {
@@ -96,7 +174,7 @@ function CourseList() {
 
 
   return (
-    <div className="mt-8 md:mt-10">
+    <div className="mt-8 md:mt-10" data-course-list>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
@@ -110,7 +188,12 @@ function CourseList() {
               </span>
             ) : (
               <>
-                {courseList.length} {courseList.length === 1 ? 'course' : 'courses'} in total
+                {totalCourses} {totalCourses === 1 ? 'course' : 'courses'} in total
+                {totalCourses > coursesPerPage && (
+                  <span className="text-muted-foreground/70">
+                    {' '}• Showing {startIndex + 1}-{Math.min(endIndex, totalCourses)} of {totalCourses}
+                  </span>
+                )}
               </>
             )}
           </p>
@@ -167,47 +250,83 @@ function CourseList() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-          {loading ? (
-            Array(6).fill(null).map((_, index) => (
-              <div
-                key={`skeleton-${index}`}
-                className="h-64 w-full rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 animate-pulse"
-                aria-hidden="true"
-              >
-                <div className="h-3/4 bg-muted/40 rounded-t-xl"></div>
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-muted/40 rounded w-3/4"></div>
-                  <div className="h-3 bg-muted/30 rounded w-1/2"></div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+            {loading ? (
+              Array(6).fill(null).map((_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  className="h-64 w-full rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 animate-pulse"
+                  aria-hidden="true"
+                >
+                  <div className="h-3/4 bg-muted/40 rounded-t-xl"></div>
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-muted/40 rounded w-3/4"></div>
+                    <div className="h-3 bg-muted/30 rounded w-1/2"></div>
+                  </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            courseList?.map((course, index) => (
-              <div 
-                key={index}
-                className="transition-all duration-200 hover:scale-[1.02] focus-within:ring-2 focus-within:ring-primary/30 focus-within:ring-offset-2 rounded-xl focus-within:outline-none"
-                tabIndex="0"
-              >
-                <CourseCardItem 
-                  course={course}
-                  onDelete={GetCourseList}
-                  userEmail={user.primaryEmailAddress.emailAddress}
-                  onRequestDelete={handleRequestDelete}
-                />
-              </div>
-            ))
+              ))
+            ) : (
+              currentCourses?.map((course, index) => (
+                <div 
+                  key={course.courseId || `course-${startIndex + index}`}
+                  className="transition-all duration-200 hover:scale-[1.02] focus-within:ring-2 focus-within:ring-primary/30 focus-within:ring-offset-2 rounded-xl focus-within:outline-none"
+                  tabIndex="0"
+                >
+                  <CourseCardItem 
+                    course={course}
+                    onDelete={GetCourseList}
+                    userEmail={user.primaryEmailAddress.emailAddress}
+                    onRequestDelete={handleRequestDelete}
+                  />
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Pagination */}
+          {!loading && totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {generatePageNumbers().map((pageNum, index) => (
+                    <PaginationItem key={index}>
+                      {pageNum === 'ellipsis-start' || pageNum === 'ellipsis-end' ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          onClick={() => handlePageChange(pageNum)}
+                          isActive={currentPage === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
-        </div>
+        </>
       )}
       
-      {!loading && courseList.length > 0 && (
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Showing {courseList.length} of {courseList.length} courses
-          </p>
-        </div>
-      )}
       {/* Render the delete dialog at the root level, outside the grid */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <Dialog.Content onClose={() => setDeleteDialogOpen(false)}>

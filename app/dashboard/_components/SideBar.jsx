@@ -47,7 +47,7 @@ function SideBar({ closeSidebar }) {
     {
       name: "Marketplace",
       icon: Store,
-      path: "/market",
+      path: "/dashboard/marketplace",
     },
     {
       name: "Upgrade",

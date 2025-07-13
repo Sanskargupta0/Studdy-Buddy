@@ -1,88 +1,92 @@
+import { NextResponse } from "next/server";
 import { db } from "@/configs/db";
 import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
-import { and, desc, eq, like } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { eq, like, desc, asc, and, or, ilike } from "drizzle-orm";
 
-export async function GET(req) {
-  const reqUrl = req.url;
-  const { searchParams } = new URL(reqUrl);
-  
-  // Extract and validate parameters
-  const search = searchParams.get("search") || "";
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const limit = parseInt(searchParams.get("limit") || "10", 10);
-  const difficultyLevel = searchParams.get("difficulty");
-  const courseType = searchParams.get("courseType");
-  const sortBy = searchParams.get("sortBy") || "upvotes"; // upvotes, date, relevance
-  
-  // Calculate offset for pagination
-  const offset = (page - 1) * limit;
-  
-  // Build filter conditions
-  let conditions = [eq(STUDY_MATERIAL_TABLE.isPublic, true)];
-  
-  if (search) {
-    conditions.push(like(STUDY_MATERIAL_TABLE.topic, `%${search}%`));
-  }
-  
-  if (difficultyLevel) {
-    conditions.push(eq(STUDY_MATERIAL_TABLE.difficultyLevel, difficultyLevel));
-  }
-  
-  if (courseType) {
-    conditions.push(eq(STUDY_MATERIAL_TABLE.courseType, courseType));
-  }
-  
-  // Determine sort order
-  let orderBy;
-  switch (sortBy) {
-    case "date":
-      orderBy = desc(STUDY_MATERIAL_TABLE.id); // Assuming id increases with newer entries
-      break;
-    case "relevance":
-      // Relevance is more complex - for now just default to upvotes
-      orderBy = desc(STUDY_MATERIAL_TABLE.upvotes);
-      break;
-    case "upvotes":
-    default:
-      orderBy = desc(STUDY_MATERIAL_TABLE.upvotes);
-      break;
-  }
-  
-  // Execute query
-  const materials = await db
-    .select({
-      id: STUDY_MATERIAL_TABLE.id,
-      courseId: STUDY_MATERIAL_TABLE.courseId,
-      topic: STUDY_MATERIAL_TABLE.topic,
-      difficultyLevel: STUDY_MATERIAL_TABLE.difficultyLevel,
-      courseType: STUDY_MATERIAL_TABLE.courseType,
-      createdBy: STUDY_MATERIAL_TABLE.createdBy,
-      upvotes: STUDY_MATERIAL_TABLE.upvotes,
-      publicSlug: STUDY_MATERIAL_TABLE.publicSlug
-    })
-    .from(STUDY_MATERIAL_TABLE)
-    .where(and(...conditions))
-    .orderBy(orderBy)
-    .limit(limit)
-    .offset(offset);
-  
-  // Count total for pagination info
-  const totalCountResult = await db
-    .select({ count: db.fn.count() })
-    .from(STUDY_MATERIAL_TABLE)
-    .where(and(...conditions));
-  
-  const totalCount = Number(totalCountResult[0].count);
-  const totalPages = Math.ceil(totalCount / limit);
-  
-  return NextResponse.json({
-    materials,
-    pagination: {
-      total: totalCount,
-      totalPages,
-      currentPage: page,
-      limit
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 12;
+    const search = searchParams.get("search") || "";
+    const sortBy = searchParams.get("sortBy") || "newest";
+    
+    const offset = (page - 1) * limit;
+
+    let whereConditions = [eq(STUDY_MATERIAL_TABLE.isPublic, true)];
+
+    // Enhanced search functionality - search in multiple fields with fuzzy matching
+    if (search) {
+      const searchTerms = search.toLowerCase().split(' ').filter(term => term.length > 0);
+      const searchConditions = [];
+      
+      searchTerms.forEach(term => {
+        searchConditions.push(
+          ilike(STUDY_MATERIAL_TABLE.topic, `%${term}%`),
+          ilike(STUDY_MATERIAL_TABLE.createdBy, `%${term}%`),
+          ilike(STUDY_MATERIAL_TABLE.courseType, `%${term}%`),
+          ilike(STUDY_MATERIAL_TABLE.difficultyLevel, `%${term}%`)
+        );
+      });
+
+      if (searchConditions.length > 0) {
+        whereConditions.push(or(...searchConditions));
+      }
     }
-  });
-} 
+
+    let query = db
+      .select()
+      .from(STUDY_MATERIAL_TABLE)
+      .where(and(...whereConditions));
+
+    // Add sorting
+    switch (sortBy) {
+      case "newest":
+        query = query.orderBy(desc(STUDY_MATERIAL_TABLE.createdAt));
+        break;
+      case "oldest":
+        query = query.orderBy(asc(STUDY_MATERIAL_TABLE.createdAt));
+        break;
+      case "popular":
+        query = query.orderBy(desc(STUDY_MATERIAL_TABLE.upvotes));
+        break;
+      case "title":
+        query = query.orderBy(asc(STUDY_MATERIAL_TABLE.topic));
+        break;
+      default:
+        query = query.orderBy(desc(STUDY_MATERIAL_TABLE.createdAt));
+    }
+
+    // Get total count for pagination
+    const totalCountQuery = db
+      .select({ count: STUDY_MATERIAL_TABLE.id })
+      .from(STUDY_MATERIAL_TABLE)
+      .where(and(...whereConditions));
+
+    const [publishedMaterials, totalCount] = await Promise.all([
+      query.limit(limit).offset(offset),
+      totalCountQuery
+    ]);
+
+    const totalPages = Math.ceil(totalCount.length / limit);
+
+    return NextResponse.json({
+      success: true,
+      courses: publishedMaterials,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: totalCount.length,
+        itemsPerPage: limit,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching published study materials:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch published study materials" },
+      { status: 500 }
+    );
+  }
+}

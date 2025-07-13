@@ -1,56 +1,139 @@
-import { db } from "@/configs/db";
-import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
-import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { db } from "@/configs/db";
+import { STUDY_MATERIAL_TABLE, USER_UPVOTES_TABLE } from "@/configs/schema";
+import { eq, and } from "drizzle-orm";
 
-export async function POST(req) {
+export async function POST(request) {
   try {
-    const { studyMaterialId } = await req.json();
-    
-    if (!studyMaterialId) {
+    const { studyMaterialId, userId } = await request.json();
+
+    if (!studyMaterialId || !userId) {
       return NextResponse.json(
-        { error: "Study material ID is required" },
+        { error: "Study material ID and user ID are required" },
         { status: 400 }
       );
     }
-    
-    // Get the current study material to check if it exists and is public
+
+    // Check if user has already upvoted this material
+    const existingUpvote = await db
+      .select()
+      .from(USER_UPVOTES_TABLE)
+      .where(
+        and(
+          eq(USER_UPVOTES_TABLE.userId, userId),
+          eq(USER_UPVOTES_TABLE.studyMaterialId, studyMaterialId)
+        )
+      )
+      .limit(1);
+
+    // Get the current study material
     const studyMaterial = await db
       .select()
       .from(STUDY_MATERIAL_TABLE)
-      .where(eq(STUDY_MATERIAL_TABLE.id, studyMaterialId));
-    
+      .where(eq(STUDY_MATERIAL_TABLE.id, studyMaterialId))
+      .limit(1);
+
     if (!studyMaterial || studyMaterial.length === 0) {
       return NextResponse.json(
         { error: "Study material not found" },
         { status: 404 }
       );
     }
-    
-    if (!studyMaterial[0].isPublic) {
-      return NextResponse.json(
-        { error: "Cannot upvote non-public study material" },
-        { status: 403 }
-      );
+
+    const currentUpvotes = studyMaterial[0].upvotes || 0;
+
+    if (existingUpvote.length > 0) {
+      // User has already upvoted, so remove the upvote
+      await db
+        .delete(USER_UPVOTES_TABLE)
+        .where(
+          and(
+            eq(USER_UPVOTES_TABLE.userId, userId),
+            eq(USER_UPVOTES_TABLE.studyMaterialId, studyMaterialId)
+          )
+        );
+
+      // Decrement the upvotes count
+      const updatedMaterial = await db
+        .update(STUDY_MATERIAL_TABLE)
+        .set({
+          upvotes: Math.max(0, currentUpvotes - 1),
+        })
+        .where(eq(STUDY_MATERIAL_TABLE.id, studyMaterialId))
+        .returning();
+
+      return NextResponse.json({
+        success: true,
+        upvotes: updatedMaterial[0].upvotes,
+        isUpvoted: false,
+        message: "Upvote removed",
+      });
+    } else {
+      // User hasn't upvoted, so add the upvote
+      await db.insert(USER_UPVOTES_TABLE).values({
+        userId,
+        studyMaterialId,
+      });
+
+      // Increment the upvotes count
+      const updatedMaterial = await db
+        .update(STUDY_MATERIAL_TABLE)
+        .set({
+          upvotes: currentUpvotes + 1,
+        })
+        .where(eq(STUDY_MATERIAL_TABLE.id, studyMaterialId))
+        .returning();
+
+      return NextResponse.json({
+        success: true,
+        upvotes: updatedMaterial[0].upvotes,
+        isUpvoted: true,
+        message: "Upvoted successfully",
+      });
     }
-    
-    // Increment upvotes
-    await db
-      .update(STUDY_MATERIAL_TABLE)
-      .set({
-        upvotes: (studyMaterial[0].upvotes || 0) + 1
-      })
-      .where(eq(STUDY_MATERIAL_TABLE.id, studyMaterialId));
-    
-    return NextResponse.json({
-      success: true,
-      message: "Upvote recorded successfully"
-    });
   } catch (error) {
-    console.error("Error upvoting study material:", error);
+    console.error("Error managing upvote:", error);
     return NextResponse.json(
-      { error: "Failed to record upvote" },
+      { error: "Failed to manage upvote" },
       { status: 500 }
     );
   }
-} 
+}
+
+// GET endpoint to check if user has upvoted
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+    const studyMaterialId = searchParams.get("studyMaterialId");
+
+    if (!userId || !studyMaterialId) {
+      return NextResponse.json(
+        { error: "User ID and study material ID are required" },
+        { status: 400 }
+      );
+    }
+
+    const upvote = await db
+      .select()
+      .from(USER_UPVOTES_TABLE)
+      .where(
+        and(
+          eq(USER_UPVOTES_TABLE.userId, userId),
+          eq(USER_UPVOTES_TABLE.studyMaterialId, parseInt(studyMaterialId))
+        )
+      )
+      .limit(1);
+
+    return NextResponse.json({
+      success: true,
+      isUpvoted: upvote.length > 0,
+    });
+  } catch (error) {
+    console.error("Error checking upvote status:", error);
+    return NextResponse.json(
+      { error: "Failed to check upvote status" },
+      { status: 500 }
+    );
+  }
+}

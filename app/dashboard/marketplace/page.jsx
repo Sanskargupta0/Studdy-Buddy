@@ -437,7 +437,7 @@ function MarketplaceCourseCard({ course, userId, isFavorited, onFavoriteChange }
         </button>
       )}
 
-      <Link href={publicUrl} target="_blank">
+      <Link href={publicUrl} target="_blank" rel="noopener noreferrer">
         <div className="p-6 flex flex-col h-full">
           <div className="flex items-start gap-4 mb-4">
             <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
@@ -454,7 +454,16 @@ function MarketplaceCourseCard({ course, userId, isFavorited, onFavoriteChange }
               <p className="text-xs text-muted-foreground mt-1">
                 By {course.createdBy}
               </p>
+              <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+               
+              </svg>
+              <span>{course?.difficultyLevel || "Easy"}</span>
+              </div>
             </div>
+            
           </div>
           
           <p className="text-muted-foreground text-sm line-clamp-3 mb-4 flex-grow">

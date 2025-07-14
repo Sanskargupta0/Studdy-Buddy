@@ -3,7 +3,9 @@ import {
   STUDY_MATERIAL_TABLE,
   CHAPTER_NOTES_TABLE,
   STUDY_TYPE_CONTENT_TABLE,
-  YOUTUBE_RECOMMENDATIONS_TABLE
+  YOUTUBE_RECOMMENDATIONS_TABLE,
+  USER_UPVOTES_TABLE,
+  FAVORITES_TABLE,
 } from "@/configs/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -27,6 +29,15 @@ export async function POST(req) {
       return NextResponse.json({ error: "You are not allowed to delete this course" }, { status: 403 });
     }
 
+    // Remove all upvotes for this study material
+    await db
+      .delete(USER_UPVOTES_TABLE)
+      .where(eq(USER_UPVOTES_TABLE.studyMaterialId, course[0].id));
+    
+    // Remove from all users' favorites
+    await db
+      .delete(FAVORITES_TABLE)
+      .where(eq(FAVORITES_TABLE.courseId, course[0].courseId));
     // Delete related data
     await db.delete(CHAPTER_NOTES_TABLE).where(eq(CHAPTER_NOTES_TABLE.courseId, courseId));
     await db.delete(STUDY_TYPE_CONTENT_TABLE).where(eq(STUDY_TYPE_CONTENT_TABLE.courseId, courseId));

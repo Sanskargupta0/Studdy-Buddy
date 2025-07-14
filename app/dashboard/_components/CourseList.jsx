@@ -8,6 +8,7 @@ import { RefreshCw } from "lucide-react";
 import { useApp } from "@/app/_context/AppContext";
 import Link from "next/link";
 import { Dialog } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import {
   Pagination,
   PaginationContent,
@@ -27,15 +28,28 @@ function CourseList() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [deleting, setDeleting] = useState(false);
   
+  // Unpublish dialog state
+  const [unpublishDialogOpen, setUnpublishDialogOpen] = useState(false);
+  const [selectedUnpublishCourse, setSelectedUnpublishCourse] = useState(null);
+  const [unpublishing, setUnpublishing] = useState(false);
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [coursesPerPage] = useState(6); // 6 courses per page to match the grid layout
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 6,
+    hasNext: false,
+    hasPrev: false
+  });
 
   useEffect(() => {
     if (isLoaded && user) {
-      GetCourseList();
+      GetCourseList(currentPage);
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, currentPage]);
 
   // Auto-refresh if any course is generating
   useEffect(() => {
@@ -44,30 +58,36 @@ function CourseList() {
     let intervalId;
     if (anyGenerating) {
       intervalId = setInterval(() => {
-        GetCourseList();
+        GetCourseList(currentPage);
       }, 10000); // 10 seconds
     }
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [courseList, loading]);
+  }, [courseList, loading, currentPage]);
 
-  const GetCourseList = async () => {
+  const GetCourseList = async (page = 1) => {
     if (!user?.primaryEmailAddress?.emailAddress) return;
 
     try {
       setLoading(true);
       const result = await axios.post("/api/courses", {
         createdBy: user.primaryEmailAddress.emailAddress,
+        page: page,
+        limit: coursesPerPage
       });
-      setCourseList(result.data.result || []);
-      setTotalCourses(result.data.result.length);
       
-      // Reset to first page if current page is beyond available pages
-      const totalPages = Math.ceil((result.data.result || []).length / coursesPerPage);
-      if (currentPage > totalPages && totalPages > 0) {
-        setCurrentPage(1);
-      }
+      setCourseList(result.data.result || []);
+      setPagination(result.data.pagination || {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        itemsPerPage: coursesPerPage,
+        hasNext: false,
+        hasPrev: false
+      });
+      setTotalCourses(result.data.pagination?.totalItems || 0);
+      
     } catch (error) {
       console.error("Error fetching course list:", error);
     } finally {
@@ -76,11 +96,8 @@ function CourseList() {
   };
 
   // Calculate pagination values
-  const totalCourses = courseList.length;
-  const totalPages = Math.ceil(totalCourses / coursesPerPage);
-  const startIndex = (currentPage - 1) * coursesPerPage;
-  const endIndex = startIndex + coursesPerPage;
-  const currentCourses = courseList.slice(startIndex, endIndex);
+  const totalCourses = pagination.totalItems;
+  const totalPages = pagination.totalPages;
 
   // Pagination handlers
   const handlePageChange = (page) => {
@@ -90,13 +107,13 @@ function CourseList() {
   };
 
   const handlePreviousPage = () => {
-    if (currentPage > 1) {
+    if (pagination.hasPrev) {
       handlePageChange(currentPage - 1);
     }
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
+    if (pagination.hasNext) {
       handlePageChange(currentPage + 1);
     }
   };
@@ -113,8 +130,8 @@ function CourseList() {
       }
     } else {
       // Show ellipsis when there are many pages
-      const startPage = Math.max(1, currentPage - 2);
-      const endPage = Math.min(totalPages, currentPage + 2);
+      const startPage = Math.max(1, pagination.currentPage - 2);
+      const endPage = Math.min(totalPages, pagination.currentPage + 2);
       
       if (startPage > 1) {
         pages.push(1);
@@ -139,6 +156,11 @@ function CourseList() {
     setDeleteDialogOpen(true);
   };
 
+  const handleRequestUnpublish = (course) => {
+    setSelectedUnpublishCourse(course);
+    setUnpublishDialogOpen(true);
+  };
+
   const handleDelete = async () => {
     if (!selectedCourse) return;
     setDeleting(true);
@@ -146,11 +168,50 @@ function CourseList() {
       await axios.post("/api/courses/delete", { courseId: selectedCourse.courseId, email: user.primaryEmailAddress.emailAddress });
       setDeleteDialogOpen(false);
       setSelectedCourse(null);
-      GetCourseList();
+      
+      // After deletion, check if current page is empty and go to previous page if needed
+      if (courseList.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      } else {
+        GetCourseList(currentPage);
+      }
     } catch (err) {
       alert("Failed to delete course. Please try again.");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    if (!selectedUnpublishCourse) return;
+    setUnpublishing(true);
+    try {
+      const response = await fetch("/api/marketplace/unpublish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          studyMaterialId: selectedUnpublishCourse.id,
+          userId: user.primaryEmailAddress.emailAddress,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message);
+        setUnpublishDialogOpen(false);
+        setSelectedUnpublishCourse(null);
+        GetCourseList(currentPage); // Refresh the course list
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to unpublish course");
+      }
+    } catch (error) {
+      console.error("Error unpublishing course:", error);
+      toast.error("Failed to unpublish course");
+    } finally {
+      setUnpublishing(false);
     }
   };
 
@@ -191,7 +252,7 @@ function CourseList() {
                 {totalCourses} {totalCourses === 1 ? 'course' : 'courses'} in total
                 {totalCourses > coursesPerPage && (
                   <span className="text-muted-foreground/70">
-                    {' '}• Showing {startIndex + 1}-{Math.min(endIndex, totalCourses)} of {totalCourses}
+                    {' '}• Showing {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}-{Math.min(pagination.currentPage * pagination.itemsPerPage, totalCourses)} of {totalCourses}
                   </span>
                 )}
               </>
@@ -202,7 +263,7 @@ function CourseList() {
         <Button
           variant="outline"
           size="sm"
-          onClick={GetCourseList}
+          onClick={() => GetCourseList(currentPage)}
           disabled={loading}
           className="gap-2 shrink-0"
           aria-label={loading ? 'Refreshing courses...' : 'Refresh courses'}
@@ -267,17 +328,18 @@ function CourseList() {
                 </div>
               ))
             ) : (
-              currentCourses?.map((course, index) => (
+              courseList?.map((course, index) => (
                 <div 
-                  key={course.courseId || `course-${startIndex + index}`}
+                  key={course.courseId || `course-${index}`}
                   className="transition-all duration-200 hover:scale-[1.02] focus-within:ring-2 focus-within:ring-primary/30 focus-within:ring-offset-2 rounded-xl focus-within:outline-none"
                   tabIndex="0"
                 >
                   <CourseCardItem 
                     course={course}
-                    onDelete={GetCourseList}
+                    onDelete={() => GetCourseList(currentPage)}
                     userEmail={user.primaryEmailAddress.emailAddress}
                     onRequestDelete={handleRequestDelete}
+                    onRequestUnpublish={handleRequestUnpublish}
                   />
                 </div>
               ))
@@ -292,8 +354,8 @@ function CourseList() {
                   <PaginationItem>
                     <PaginationPrevious 
                       onClick={handlePreviousPage}
-                      disabled={currentPage === 1}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      disabled={!pagination.hasPrev}
+                      className={!pagination.hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
                   </PaginationItem>
                   
@@ -304,7 +366,7 @@ function CourseList() {
                       ) : (
                         <PaginationLink
                           onClick={() => handlePageChange(pageNum)}
-                          isActive={currentPage === pageNum}
+                          isActive={pagination.currentPage === pageNum}
                           className="cursor-pointer"
                         >
                           {pageNum}
@@ -316,8 +378,8 @@ function CourseList() {
                   <PaginationItem>
                     <PaginationNext 
                       onClick={handleNextPage}
-                      disabled={currentPage === totalPages}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      disabled={!pagination.hasNext}
+                      className={!pagination.hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -342,6 +404,50 @@ function CourseList() {
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </Dialog.Content>
+      </Dialog>
+
+      {/* Render the unpublish dialog at the root level, outside the grid */}
+      <Dialog open={unpublishDialogOpen} onOpenChange={setUnpublishDialogOpen}>
+        <Dialog.Content onClose={() => setUnpublishDialogOpen(false)}>
+          <Dialog.Title icon={<span className="text-red-500">⚠️</span>}>
+            Remove from Public
+          </Dialog.Title>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to remove <span className="font-semibold">"{selectedUnpublishCourse?.courseLayout?.courseTitle || 'this course'}"</span> from the public marketplace?
+            </p>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-lg">
+              <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+                This action will:
+              </h4>
+              <ul className="text-sm text-red-700 dark:text-red-300 space-y-1">
+                <li>• Remove the course from the public marketplace</li>
+                <li>• Delete all current upvotes ({selectedUnpublishCourse?.upvotes || 0} upvotes)</li>
+                <li>• Remove from everyone's favorite lists</li>
+                <li>• Make the course private again</li>
+              </ul>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              This action cannot be undone. You can republish the course later, but all upvotes and favorites will start from zero.
+            </p>
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setUnpublishDialogOpen(false)}
+              disabled={unpublishing}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleUnpublish}
+              disabled={unpublishing}
+            >
+              {unpublishing ? 'Removing...' : 'Remove from Public'}
             </Button>
           </div>
         </Dialog.Content>

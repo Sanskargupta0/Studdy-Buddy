@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/configs/db";
 import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
-import { eq, like, desc, asc, and, or, ilike } from "drizzle-orm";
+import { eq, like, desc, asc, and, or, ilike, sql } from "drizzle-orm";
 
 export async function GET(request) {
   try {
@@ -59,16 +59,17 @@ export async function GET(request) {
 
     // Get total count for pagination
     const totalCountQuery = db
-      .select({ count: STUDY_MATERIAL_TABLE.id })
+      .select({ count: sql`count(*)` })
       .from(STUDY_MATERIAL_TABLE)
       .where(and(...whereConditions));
 
-    const [publishedMaterials, totalCount] = await Promise.all([
+    const [publishedMaterials, totalCountResult] = await Promise.all([
       query.limit(limit).offset(offset),
       totalCountQuery
     ]);
 
-    const totalPages = Math.ceil(totalCount.length / limit);
+    const totalItems = parseInt(totalCountResult[0]?.count || 0);
+    const totalPages = Math.ceil(totalItems / limit);
 
     return NextResponse.json({
       success: true,
@@ -76,7 +77,7 @@ export async function GET(request) {
       pagination: {
         currentPage: page,
         totalPages,
-        totalItems: totalCount.length,
+        totalItems: totalItems,
         itemsPerPage: limit,
         hasNext: page < totalPages,
         hasPrev: page > 1,

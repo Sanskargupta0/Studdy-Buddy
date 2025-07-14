@@ -1,4 +1,4 @@
-import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import React, { useState } from "react";
@@ -32,12 +32,7 @@ function CourseIntroCard({ course }) {
       }
       
       const data = await response.json();
-      setPublicUrl(`/market/${data.publicSlug}`);
-      
-      // Refresh the course data to update UI
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      setPublicUrl(`/public/${data.publicSlug}`);
     } catch (error) {
       console.error("Error publishing study material:", error);
       setPublishError(error.message);
@@ -69,6 +64,7 @@ function CourseIntroCard({ course }) {
           
 
           <div className="mt-4 flex items-center gap-2 text-muted-foreground text-sm">
+           <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
               <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
               <path d="M9 10h6"></path>
@@ -77,6 +73,15 @@ function CourseIntroCard({ course }) {
             </svg>
             <span>{course?.courseLayout?.chapters?.length || 0} chapters</span>
           </div>
+          <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+               
+              </svg>
+              <span>{course?.difficultyLevel || "Easy"}</span>
+          </div>
+            </div>
         </div>
         
         {/* Action buttons */}
@@ -87,9 +92,9 @@ function CourseIntroCard({ course }) {
                 <div className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
                   Published to Marketplace
                 </div>
+                <Link href={`/public/${course.publicSlug}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                 <Button 
                   variant="outline" 
-                  onClick={() => router.push(`/market/${course.publicSlug}`)}
                   className="w-full sm:w-auto"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
@@ -97,13 +102,14 @@ function CourseIntroCard({ course }) {
                     <polyline points="15 3 21 3 21 9"></polyline>
                     <line x1="10" y1="14" x2="21" y2="3"></line>
                   </svg>
-                  View in Marketplace
+                  View in Public page
                 </Button>
+               </Link>
               </div>
             ) : (
               <Button 
                 onClick={handleMakePublic} 
-                disabled={isPublishing}
+                disabled={isPublishing || publicUrl?true : false}
                 className="w-full sm:w-auto"
               >
                 {isPublishing ? (
@@ -150,7 +156,7 @@ function CourseIntroCard({ course }) {
                   rel="noopener noreferrer"
                   className="text-sm font-medium text-green-700 dark:text-green-300 hover:text-green-600 dark:hover:text-green-400 transition-colors"
                 >
-                  View in marketplace <span aria-hidden="true">→</span>
+                  View in Public page <span aria-hidden="true">→</span>
                 </a>
               </div>
             </div>

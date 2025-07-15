@@ -1,0 +1,26 @@
+{
+  "name": "StuddyBuddy - AI-Powered Study Material Generator",
+  "short_name": "StuddyBuddy",
+  "description": "Create personalized study materials with AI. Generate flashcards, notes, quizzes, and Q&A sessions in minutes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity", "utilities"],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

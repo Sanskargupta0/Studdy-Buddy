@@ -204,6 +204,7 @@ const LandingPage = () => {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              <UserButton afterSignOutUrl="/" />
               <button
                 type="button"
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500"

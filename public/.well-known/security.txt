@@ -1,0 +1,3 @@
+Contact: https://github.com/Sanskargupta0/Studdy-Buddy/issues
+Preferred-Languages: en
+Canonical: https://studdy-buddy.vercel.app/.well-known/security.txt

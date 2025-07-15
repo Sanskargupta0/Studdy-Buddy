@@ -11,6 +11,7 @@ import {
   GenerateQnAAiModel,
   GenerateQuizAiModel,
   GenerateStudyTypeContentAiModel,
+  createNotesPrompt,
 } from "@/configs/AiModel";
 
 
@@ -32,19 +33,21 @@ export const GenerateNotes = inngest.createFunction(
         // Use Promise.all to wait for all chapter notes to be generated
         await Promise.all(
           chapters.map(async (chapter, index) => {
-            const PROMPT =
-              "Generate exam material detail content for each chapter. Make sure to include all topic point in the content, make sure to give content in HTML format (DO not add HTML, Head, Body, title tag), The Chapters:" +
-              JSON.stringify(chapter);
+            try {
+              const prompt = createNotesPrompt(chapter);
+              const result = await generateNotesAiModel.sendMessage(prompt);
+              const aiResp = await result.response.text();
 
-            const result = await generateNotesAiModel.sendMessage(PROMPT);
-            const aiResp = await result.response.text();
-
-            // Insert notes into CHAPTER_NOTES_TABLE
-            await db.insert(CHAPTER_NOTES_TABLE).values({
-              chapterId: index + 1, // Using 1-based indexing for chapters
-              courseId: course?.courseId,
-              notes: aiResp,
-            });
+              // Insert notes into CHAPTER_NOTES_TABLE
+              await db.insert(CHAPTER_NOTES_TABLE).values({
+                chapterId: index + 1, // Using 1-based indexing for chapters
+                courseId: course?.courseId,
+                notes: aiResp,
+              });
+            } catch (chapterError) {
+              console.error(`Error generating notes for chapter ${index + 1}:`, chapterError);
+              throw chapterError; // Re-throw to be caught by outer try-catch
+            }
           })
         );
 
@@ -95,34 +98,64 @@ export const GenerateStudyTypeContent = inngest.createFunction(
     const { studyType, prompt, courseId, recordId } = event.data;
 
     const AiResult = await step.run(
-      "Generating FlashCard using Ai",
+      "Generating Content using AI",
       async () => {
-        let result;
-        if (studyType === "Flashcard") {
-          result = await GenerateStudyTypeContentAiModel.sendMessage(prompt);
-        } else if (studyType === "Quiz") {
-          result = await GenerateQuizAiModel.sendMessage(prompt);
-        } else if (studyType === "QA") {
-          result = await GenerateQnAAiModel.sendMessage(prompt); // Add new condition
-        } else {
-          throw new Error(`Unsupported studyType: ${studyType}`);
+        try {
+          let result;
+          if (studyType === "Flashcard") {
+            result = await GenerateStudyTypeContentAiModel.sendMessage(prompt);
+          } else if (studyType === "Quiz") {
+            result = await GenerateQuizAiModel.sendMessage(prompt);
+          } else if (studyType === "QA") {
+            result = await GenerateQnAAiModel.sendMessage(prompt);
+          } else {
+            throw new Error(`Unsupported studyType: ${studyType}`);
+          }
+
+          const responseText = result.response.text();
+          
+          // Validate JSON response
+          let parsedResult;
+          try {
+            parsedResult = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error("Failed to parse AI response:", responseText);
+            throw new Error("Invalid JSON response from AI");
+          }
+          
+          return parsedResult;
+        } catch (aiError) {
+          console.error(`Error generating ${studyType} content:`, aiError);
+          throw aiError;
         }
-        const AIResult = JSON.parse(result.response.text());
-        return AIResult;
       }
     );
 
     //Save the result
     const DbResult = await step.run("Save Result to DB", async () => {
-      const result = await db
-        .update(STUDY_TYPE_CONTENT_TABLE)
-        .set({
-          content: AiResult,
-          status: "Ready",
-        })
-        .where(eq(STUDY_TYPE_CONTENT_TABLE.id, recordId));
+      try {
+        const result = await db
+          .update(STUDY_TYPE_CONTENT_TABLE)
+          .set({
+            content: AiResult,
+            status: "Ready",
+          })
+          .where(eq(STUDY_TYPE_CONTENT_TABLE.id, recordId));
 
-      return "Data Inserted";
+        return "Data Inserted";
+      } catch (dbError) {
+        console.error("Error saving to database:", dbError);
+        
+        // Update status to error in case of failure
+        await db
+          .update(STUDY_TYPE_CONTENT_TABLE)
+          .set({
+            status: "Error",
+          })
+          .where(eq(STUDY_TYPE_CONTENT_TABLE.id, recordId));
+          
+        throw dbError;
+      }
     });
   }
 );

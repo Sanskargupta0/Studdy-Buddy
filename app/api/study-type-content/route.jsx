@@ -3,6 +3,11 @@ import { STUDY_TYPE_CONTENT_TABLE } from "@/configs/schema";
 import { inngest } from "@/inngest/client";
 import { NextResponse } from "next/server";
 import { eq, and } from "drizzle-orm";
+import { 
+  createFlashcardPrompt, 
+  createQuizPrompt, 
+  createQAPrompt 
+} from "@/configs/AiModel";
 
 // Add GET method to fetch content
 export async function GET(req) {
@@ -97,21 +102,21 @@ export async function POST(req) {
   }
 
   // Get the appropriate prompt based on type
-  const getPrompt = (type) => {
+  const getPrompt = (type, chapters) => {
     switch (type) {
       case "Flashcard":
-        return `Generate the flashcard on topic: ${chapters} in JSON format with front and back content, Maximum15`;
+        return createFlashcardPrompt(chapters);
       case "Quiz":
-        return `Generate Quiz on topic: ${chapters} with questions and options along with the answer in JSON Format, (Max 10)`;
+        return createQuizPrompt(chapters);
       case "QA":
-        return `Generate a detailed Q&A on topic: ${chapters} in JSON format with each question and a detailed answer, Maximum10`;
+        return createQAPrompt(chapters);
       default:
         throw new Error(`Unsupported study type: ${type}`);
     }
   };
 
   try {
-    const PROMPT = getPrompt(type);
+    const prompt = getPrompt(type, chapters);
 
     const result = await db
       .insert(STUDY_TYPE_CONTENT_TABLE)
@@ -128,7 +133,7 @@ export async function POST(req) {
       name: "studyType.content",
       data: {
         studyType: type,
-        prompt: PROMPT,
+        prompt: prompt,
         courseId: courseId,
         recordId: result[0].id,
       },

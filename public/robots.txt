@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: /sitemap.xml
+
+# Disallow admin areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Allow specific API endpoints that might be useful for crawling
+Allow: /api/og

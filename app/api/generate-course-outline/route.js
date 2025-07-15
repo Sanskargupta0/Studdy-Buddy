@@ -1,4 +1,4 @@
-import { courseOutlineAIModel } from "@/configs/AiModel";
+import { courseOutlineAIModel, createCourseOutlinePrompt } from "@/configs/AiModel";
 import { db } from "@/configs/db";
 import { STUDY_MATERIAL_TABLE, USER_TABLE } from "@/configs/schema";
 import { inngest } from "@/inngest/client";
@@ -41,15 +41,10 @@ export async function POST(req) {
     }
 
 
-    const PROMPT = `
-        generate a study material for '${topic}' for '${courseType}' 
-        and level of Difficulty will be '${difficultyLevel}' 
-        with course title, summary of course, List of chapters along with the summary and Emoji icon for each chapter, 
-        Topic list in each chapter in JSON format
-      `;
+    const prompt = createCourseOutlinePrompt(topic, courseType, difficultyLevel);
 
     // Generate course layout using AI
-    const aiResp = await courseOutlineAIModel.sendMessage(PROMPT);
+    const aiResp = await courseOutlineAIModel.sendMessage(prompt);
     const aiResult = JSON.parse(aiResp.response.text());
 
      // If not a member, use a credit

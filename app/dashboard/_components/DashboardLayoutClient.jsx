@@ -134,11 +134,17 @@ function DashboardLayoutClient({ children }) {
         <footer className="border-t border-border bg-background/50 py-4 px-6 text-center text-sm text-muted-foreground">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
             <p>© {new Date().getFullYear()} Studdy Buddy. All rights reserved.</p>
-            <div className="flex items-center gap-4">
-              <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
-              <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
-              <a href="/contact" className="hover:text-foreground transition-colors">Contact</a>
-            </div>
+            <p className="flex items-center justify-center gap-1">
+                Made with <span className="text-red-500">❤️</span> by{" "}
+                <a
+                  href="https://github.com/Sanskargupta0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Sanskar Gupta
+                </a>
+              </p>
           </div>
         </footer>
       </div>

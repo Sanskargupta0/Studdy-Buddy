@@ -3,7 +3,7 @@
 import React, { useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, LogIn, UserPlus, Github, Moon, Sun } from "lucide-react";
+import { Menu, X, LogIn, UserPlus, Github, Moon, Sun, LayoutDashboard, Store } from "lucide-react";
 import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import {
   Tooltip,
@@ -39,18 +39,20 @@ export default function MarketLayout({ children }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
+              <Link href={isSignedIn?'/dashboard':"/"}>
               <div className="flex-shrink-0 flex items-center">
                 <Image
                   src={"/logo.svg"}
                   alt="logo"
                   width={32}
                   height={32}
-                  className="h-8 w-auto"
+                  className="h-8 w-auto dark:invert dark:brightness-0 dark:contrast-100 transition-all duration-300"
                 />
                 <span className="ml-2 text-xl font-bold text-foreground">
                   StuddyBuddy
                 </span>
               </div>
+              </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
               <TooltipProvider>
@@ -237,11 +239,13 @@ export default function MarketLayout({ children }) {
                 <div className="flex items-center px-4 space-x-3">
                   <Link href="/dashboard" className="w-full">
                     <button className="nav-button w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-all duration-200 shadow-md hover:shadow-lg">
+                       <LayoutDashboard className="h-4 w-4 mr-2" />
                       Dashboard
                     </button>
                   </Link>
                   <Link href="/dashboard/marketplace" className="w-full">
                     <button className="nav-button w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200">
+                     <Store className="h-4 w-4 mr-2" />
                       Marketplace
                     </button>
                   </Link>
@@ -257,6 +261,17 @@ export default function MarketLayout({ children }) {
       <footer className="border-t border-border py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} Studdy Buddy. All rights reserved.</p>
+          <p className="flex items-center justify-center gap-1">
+                Made with <span className="text-red-500">❤️</span> by{" "}
+                <a
+                  href="https://github.com/Sanskargupta0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Sanskar Gupta
+                </a>
+              </p>
         </div>
       </footer>
     </div>

@@ -1,14 +1,15 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import CourseCardItem from "./CourseCardItem";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Plus } from "lucide-react";
 import { useApp } from "@/app/_context/AppContext";
 import Link from "next/link";
 import { Dialog } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   Pagination,
   PaginationContent,
@@ -23,10 +24,11 @@ function CourseList() {
   const { user, isLoaded } = useUser();
   const [courseList, setCourseList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { setTotalCourses } = useApp();
+  const { setTotalCourses, credits, isMember } = useApp();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
   
   // Unpublish dialog state
   const [unpublishDialogOpen, setUnpublishDialogOpen] = useState(false);
@@ -150,6 +152,23 @@ function CourseList() {
     
     return pages;
   };
+
+  // Handle create new course with credit checking
+  const handleCreateNew = useCallback(async (e) => {
+    if (!isMember && credits <= 0) {
+      e.preventDefault();
+      toast.error(
+        "You have no credits left. Please upgrade to continue creating materials.",
+        {
+          action: {
+            label: "Upgrade",
+            onClick: () => router.push("/dashboard/upgrade"),
+          },
+        }
+      );
+      return false;
+    }
+  }, [isMember, credits, router]);
 
   const handleRequestDelete = (course) => {
     setSelectedCourse(course);
@@ -310,8 +329,7 @@ function CourseList() {
             </Link>
           </Button>
         </div>
-      ) : (
-        <>
+      ) : (        <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
             {loading ? (
               Array(6).fill(null).map((_, index) => (
@@ -328,21 +346,53 @@ function CourseList() {
                 </div>
               ))
             ) : (
-              courseList?.map((course, index) => (
-                <div 
-                  key={course.courseId || `course-${index}`}
-                  className="transition-all duration-200 hover:scale-[1.02] focus-within:ring-2 focus-within:ring-primary/30 focus-within:ring-offset-2 rounded-xl focus-within:outline-none"
-                  tabIndex="0"
-                >
-                  <CourseCardItem 
-                    course={course}
-                    onDelete={() => GetCourseList(currentPage)}
-                    userEmail={user.primaryEmailAddress.emailAddress}
-                    onRequestDelete={handleRequestDelete}
-                    onRequestUnpublish={handleRequestUnpublish}
-                  />
+              <>
+                {/* Create Course Card */}
+                <div className="transition-all duration-200 hover:scale-[1.02] focus-within:ring-2 focus-within:ring-primary/30 focus-within:ring-offset-2 rounded-xl focus-within:outline-none">
+                  <Link
+                    href="/dashboard/create"
+                    onClick={handleCreateNew}
+                    className="block h-full w-full rounded-xl border-2 border-dashed border-border hover:border-primary/50 bg-card/50 hover:bg-card/70 transition-all duration-200 group focus:outline-none"
+                    aria-label="Create new course"
+                  >
+                    <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+                      <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                        <Plus className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" aria-hidden="true" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                        Create Course
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                        Start building your next study material
+                      </p>
+                      {!isMember && (
+                        <div className="mt-3 px-3 py-1 bg-primary/10 rounded-full">
+                          <span className="text-xs font-medium text-primary">
+                            {credits} credits left
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
                 </div>
-              ))
+
+                {/* Existing Course Cards */}
+                {courseList?.map((course, index) => (
+                  <div 
+                    key={course.courseId || `course-${index}`}
+                    className="transition-all duration-200 hover:scale-[1.02] focus-within:ring-2 focus-within:ring-primary/30 focus-within:ring-offset-2 rounded-xl focus-within:outline-none"
+                    tabIndex="0"
+                  >
+                    <CourseCardItem 
+                      course={course}
+                      onDelete={() => GetCourseList(currentPage)}
+                      userEmail={user.primaryEmailAddress.emailAddress}
+                      onRequestDelete={handleRequestDelete}
+                      onRequestUnpublish={handleRequestUnpublish}
+                    />
+                  </div>
+                ))}
+              </>
             )}
           </div>
 

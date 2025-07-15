@@ -14,6 +14,15 @@ export async function POST(request) {
       );
     }
 
+    // Convert studyMaterialId to number if it's a string
+    const materialId = parseInt(studyMaterialId);
+    if (isNaN(materialId)) {
+      return NextResponse.json(
+        { error: "Invalid study material ID" },
+        { status: 400 }
+      );
+    }
+
     // Check if user has already upvoted this material
     const existingUpvote = await db
       .select()
@@ -21,7 +30,7 @@ export async function POST(request) {
       .where(
         and(
           eq(USER_UPVOTES_TABLE.userId, userId),
-          eq(USER_UPVOTES_TABLE.studyMaterialId, studyMaterialId)
+          eq(USER_UPVOTES_TABLE.studyMaterialId, materialId)
         )
       )
       .limit(1);
@@ -30,7 +39,7 @@ export async function POST(request) {
     const studyMaterial = await db
       .select()
       .from(STUDY_MATERIAL_TABLE)
-      .where(eq(STUDY_MATERIAL_TABLE.id, studyMaterialId))
+      .where(eq(STUDY_MATERIAL_TABLE.id, materialId))
       .limit(1);
 
     if (!studyMaterial || studyMaterial.length === 0) {
@@ -49,7 +58,7 @@ export async function POST(request) {
         .where(
           and(
             eq(USER_UPVOTES_TABLE.userId, userId),
-            eq(USER_UPVOTES_TABLE.studyMaterialId, studyMaterialId)
+            eq(USER_UPVOTES_TABLE.studyMaterialId, materialId)
           )
         );
 
@@ -59,7 +68,7 @@ export async function POST(request) {
         .set({
           upvotes: Math.max(0, currentUpvotes - 1),
         })
-        .where(eq(STUDY_MATERIAL_TABLE.id, studyMaterialId))
+        .where(eq(STUDY_MATERIAL_TABLE.id, materialId))
         .returning();
 
       return NextResponse.json({
@@ -72,7 +81,7 @@ export async function POST(request) {
       // User hasn't upvoted, so add the upvote
       await db.insert(USER_UPVOTES_TABLE).values({
         userId,
-        studyMaterialId,
+        studyMaterialId: materialId,
       });
 
       // Increment the upvotes count
@@ -81,7 +90,7 @@ export async function POST(request) {
         .set({
           upvotes: currentUpvotes + 1,
         })
-        .where(eq(STUDY_MATERIAL_TABLE.id, studyMaterialId))
+        .where(eq(STUDY_MATERIAL_TABLE.id, materialId))
         .returning();
 
       return NextResponse.json({
@@ -114,13 +123,22 @@ export async function GET(request) {
       );
     }
 
+    // Convert studyMaterialId to number if it's a string
+    const materialId = parseInt(studyMaterialId);
+    if (isNaN(materialId)) {
+      return NextResponse.json(
+        { error: "Invalid study material ID" },
+        { status: 400 }
+      );
+    }
+
     const upvote = await db
       .select()
       .from(USER_UPVOTES_TABLE)
       .where(
         and(
           eq(USER_UPVOTES_TABLE.userId, userId),
-          eq(USER_UPVOTES_TABLE.studyMaterialId, parseInt(studyMaterialId))
+          eq(USER_UPVOTES_TABLE.studyMaterialId, materialId)
         )
       )
       .limit(1);

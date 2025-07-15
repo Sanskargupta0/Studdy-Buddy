@@ -1,207 +1,164 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, MessageSquare, ChevronDown, ChevronRight } from "lucide-react";
+import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import StepProgress from "../components/StepProgress";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
-export default function PublicQAPage() {
+function QnAPage() {
   const { slug } = useParams();
   const router = useRouter();
-  const [course, setCourse] = useState(null);
-  const [qaData, setQaData] = useState([]);
-  const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [qnaData, setQnaData] = useState([]);
+  const [stepCount, setStepCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch course details
-        const courseResponse = await fetch(`/api/marketplace/course?slug=${slug}`);
-        if (!courseResponse.ok) {
-          throw new Error("Failed to fetch course");
-        }
-        const courseData = await courseResponse.json();
-        setCourse(courseData.course);
+    GetQnA();
+  }, []);
 
-        // Try to fetch Q&A data
-        try {
-          const qaResponse = await fetch(`/api/study-type-content?courseId=${courseData.course.courseId}&type=QA`);
-          if (qaResponse.ok) {
-            const qaResponseData = await qaResponse.json();
-            if (qaResponseData && qaResponseData.content) {
-              setQaData(qaResponseData.content);
-            }
-          }
-        } catch (qaError) {
-          console.log("No Q&A available for this course");
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
+  const GetQnA = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`/api/marketplace/course?slug=${slug}`);
+      const courseId = res?.data?.course?.courseId;
+      if (!courseId) {
+        console.error("Course ID not found in response");
+        return;
       }
-    };
-
-    if (slug) {
-      fetchData();
+      const result = await axios.post("/api/study-type", {
+        courseId: courseId,
+        studyType: "QA",
+      });
+      setQnaData(result?.data?.content || []);
+    } catch (error) {
+      console.error("Error fetching Q&A data:", error);
+      toast.error("Failed to load Q&A. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }, [slug]);
-
-  const toggleQuestion = (index) => {
-    setExpandedQuestions(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="mb-4">
-          <Skeleton className="h-9 w-40" />
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="border border-border rounded-xl p-4">
-              <Skeleton className="h-6 w-3/4 mb-2" />
-              <Skeleton className="h-4 w-full mb-1" />
-              <Skeleton className="h-4 w-5/6" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !course) {
-    return (
-      <div className="max-w-3xl mx-auto py-12">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-6 rounded-lg text-center">
-          <h2 className="text-xl font-semibold text-red-800 dark:text-red-200 mb-2">
-            Course Not Found
-          </h2>
-          <p className="text-red-700 dark:text-red-300 mb-6">
-            {error || "The course you're looking for doesn't exist or is no longer public."}
-          </p>
-          <Button onClick={() => router.push("/dashboard/marketplace")}>
-            Back to Marketplace
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const goToCoursePage = () => {
+    router.push(`/public/${slug}`);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+    <div className="max-w-4xl mx-auto p-6">
+      {/* Back to Course Button */}
+      <div className="mb-6">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push(`/public/${slug}`)}
+          onClick={goToCoursePage}
           className="flex items-center gap-1"
         >
           <ArrowLeft size={16} /> Back to Course
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Questions & Answers</h1>
-          <p className="text-muted-foreground">
-            {course?.courseLayout?.courseTitle}
-          </p>
-        </div>
       </div>
 
-      {/* Q&A Content */}
-      {qaData.length === 0 ? (
-        <div className="text-center py-12 border border-dashed rounded-lg">
-          <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-          <h3 className="text-lg font-medium mb-2">No Q&A available</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Questions and answers for this course are not yet available. Check back later or explore other study materials.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="text-sm text-muted-foreground mb-6">
-            {qaData.length} question{qaData.length !== 1 ? 's' : ''} available
+      <h2 className="font-bold text-3xl mb-8 text-center text-primary">
+        Question & Answer
+      </h2>
+
+      {loading ? (
+        <div className="space-y-6">
+          <div className="flex gap-2">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="w-full h-2 rounded-full" />
+            ))}
           </div>
-          
-          {qaData.map((qa, index) => {
-            const isExpanded = expandedQuestions[index];
-            
-            return (
-              <div
-                key={index}
-                className="border border-border rounded-xl overflow-hidden bg-card"
+
+          {/* Question Skeleton */}
+          <div className="p-6 rounded-lg shadow-md mb-6 border">
+            <Skeleton className="h-6 w-1/3 mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-5/6 mb-2" />
+            <Skeleton className="h-4 w-4/6" />
+          </div>
+
+          {/* Answer Skeleton */}
+          <div className="p-6 rounded-lg shadow-md border">
+            <Skeleton className="h-6 w-1/3 mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-5/6 mb-2" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/6" />
+          </div>
+        </div>
+      ) : qnaData.length > 0 ? (
+        <>
+          <StepProgress
+            data={qnaData}
+            stepCount={stepCount}
+            attemptedQuestions={qnaData.map((item) => null)}
+            setStepCount={(value) => setStepCount(value)}
+          />
+
+          <div className="mt-8 space-y-6">
+            {/* Question Box */}
+            <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg shadow-md mb-6 transition-all hover:shadow-lg">
+              <h3 className="font-bold text-xl text-blue-700 mb-3">
+                Question
+              </h3>
+              <p className="text-blue-900 leading-relaxed">
+                {qnaData[stepCount]?.question}
+              </p>
+            </div>
+
+            {/* Answer Box */}
+            <div className="p-6 bg-green-50 border border-green-200 rounded-lg shadow-md transition-all hover:shadow-lg">
+              <h3 className="font-bold text-xl text-green-700 mb-3">
+                Answer
+              </h3>
+              <p className="text-green-900 leading-relaxed">
+                {qnaData[stepCount]?.answer}
+              </p>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setStepCount((prev) => Math.max(0, prev - 1))}
+                disabled={stepCount === 0}
               >
-                <div
-                  className="flex items-center justify-between p-6 cursor-pointer hover:bg-muted/40 transition-colors"
-                  onClick={() => toggleQuestion(index)}
+                Previous
+              </Button>
+
+              {stepCount === qnaData.length - 1 ? (
+                <Button
+                  onClick={goToCoursePage}
+                  className="bg-green-500 hover:bg-green-600 text-white"
                 >
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
-                      Q
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-foreground leading-6">
-                        {qa.question}
-                      </h3>
-                      {!isExpanded && (
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                          Click to reveal answer...
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center ml-4">
-                    {isExpanded ? (
-                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
-                
-                {isExpanded && (
-                  <div className="px-6 pb-6 pt-0">
-                    <div className="ml-12 pl-4 border-l-2 border-muted">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 font-medium text-sm">
-                          A
-                        </div>
-                        <div className="flex-1">
-                          <div className="bg-muted/30 rounded-lg p-4">
-                            <p className="text-foreground leading-relaxed">
-                              {qa.answer}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  Finish & Go to Course Page
+                </Button>
+              ) : (
+                <Button
+                  onClick={() =>
+                    setStepCount((prev) => Math.min(qnaData.length - 1, prev + 1))
+                  }
+                >
+                  Next
+                </Button>
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="text-center p-10 border border-dashed rounded-xl">
+          <p className="text-gray-600 mb-4">
+            No Q&A data available for this course.
+          </p>
+          <Button onClick={goToCoursePage}>Go to Course Page</Button>
         </div>
       )}
-
-      {/* Help Section */}
-      <div className="bg-muted/30 rounded-xl p-6 mt-8">
-        <h3 className="text-lg font-semibold mb-2">Need more help?</h3>
-        <p className="text-muted-foreground mb-4">
-          If you have additional questions about this course material, consider creating your own course to explore the topic further.
-        </p>
-        <Button variant="outline" onClick={() => router.push("/dashboard/create")}>
-          Create Your Own Course
-        </Button>
-      </div>
     </div>
   );
+}
+
+export default function QnAPageWrapper() {
+  return <QnAPage />;
 }

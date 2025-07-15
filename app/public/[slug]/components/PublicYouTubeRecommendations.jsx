@@ -2,16 +2,16 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 
-const PublicYouTubeRecommendations = ({ courseId, course }) => {
+const PublicYouTubeRecommendations = ({ courseId }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (course && courseId) {
+    if (courseId) {
       getRecommendations();
     }
-  }, [course, courseId]);
+  }, [courseId]);
 
   const getRecommendations = async () => {
     try {

@@ -1,8 +1,7 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { usePathname } from "next/navigation";
-import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { Volume2, VolumeX, Zap, Moon, Sun, Menu, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -87,17 +86,11 @@ HeaderControls.displayName = 'HeaderControls';
 function DashboardHeader({ onBurgerClick, className, ...props }) {
   // All hooks must be called unconditionally at the top level
   const { zenMode, toggleZenMode, loading: creditsLoading, isMember,credits } = useApp();
-  const pathname = usePathname();
   const [audio, setAudio] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   
-  // Memoize the header content to prevent unnecessary re-renders
-  const headerContent = useMemo(() => ({
-    title: pathname.split('/').pop().charAt(0).toUpperCase() + pathname.split('/').pop().slice(1) || 'Dashboard',
-    icon: pathname.includes('create') ? <Zap className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />
-  }), [pathname]);
   
   // Memoized theme toggle function with animation
   const toggleTheme = useCallback(() => {

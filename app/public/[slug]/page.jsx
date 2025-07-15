@@ -5,17 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import PublicCourseIntroCard from "./components/PublicCourseIntroCard";
 import PublicStudyMaterialSection from "./components/PublicStudyMaterialSection";
 import PublicChapterList from "./components/PublicChapterList";
 import PublicYouTubeRecommendations from "./components/PublicYouTubeRecommendations";
 
 export default function PublicCoursePage({ params }) {
-  const { slug } = params;
+  const { isSignedIn} = useUser();
   const router = useRouter();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [slug, setSlug] = useState(null);
+
+  useEffect(() => {
+    const initializeSlug = async () => {
+      const resolvedParams = await params;
+      setSlug(resolvedParams.slug);
+    };
+    
+    initializeSlug();
+  }, [params]);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -111,6 +122,7 @@ export default function PublicCoursePage({ params }) {
   return (
     <div className="space-y-8 pb-10">
       {/* Back to Marketplace Button */}
+      {isSignedIn && (
       <div className="mb-4">
         <Button
           variant="outline"
@@ -121,18 +133,19 @@ export default function PublicCoursePage({ params }) {
           <ArrowLeft size={16} /> Back to Marketplace
         </Button>
       </div>
+      )}
 
       {/* Course Intro */}
       <PublicCourseIntroCard course={course} />
 
       {/* Study Materials Options */}
-      <PublicStudyMaterialSection courseId={course.id} course={course} />
+      <PublicStudyMaterialSection courseId={course.courseId} course={course} />
 
       {/* YouTube Recommendations */}
-      <PublicYouTubeRecommendations courseId={course.id} course={course} />
+      <PublicYouTubeRecommendations courseId={course.courseId} />
 
       {/* Chapter List */}
-      <PublicChapterList courseId={course.id} course={course} />
+      <PublicChapterList course={course} />
 
       {/* CTA Section */}
       <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center">

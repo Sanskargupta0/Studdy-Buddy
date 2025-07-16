@@ -105,11 +105,17 @@ cd Studdy-Buddy
 
 ### Installation
 
-Install dependencies using npm:
+Install dependencies using npm or use pnpm:
 
 ```bash
 npm install
 ```
+or
+
+```bash
+pnpm install
+```
+
 
 ### Environment Setup
 

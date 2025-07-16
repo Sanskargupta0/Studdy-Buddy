@@ -9,6 +9,8 @@ import StructuredData from "@/components/StructuredData";
 const outfit = Outfit({
   subsets: ["latin"],
   display: 'swap', // Optimize font loading
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+  adjustFontFallback: false, // Prevent layout shift if font fails to load
 });
 
 // Metadata for the application

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopicInput from "./_components/TopicInput";
 import axios from "axios";
-import { v4 as uuidv4 } from "uuid";
+import { nanoid } from "nanoid";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -42,7 +42,7 @@ function CreateCourse() {
       return;
     }
     
-    const courseId = uuidv4();
+    const courseId = nanoid();
     setLoading(true);
     try {
       const result = await axios.post("/api/generate-course-outline", {
